@@ -27,6 +27,7 @@ import { ExpensesPage } from './expenses';
 import { PurchasePage } from './purchase';
 import { SchedulingPage } from './scheduling';
 import { WorkProgressPage } from './work-progress';
+import { getApiUrl, API_ENDPOINTS } from '@/lib/api-config';
 
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
@@ -383,9 +384,13 @@ export function SitesPage({ selectedSite: propSelectedSite, onSiteSelect }: Site
         setIsLoading(true);
 
         // Fetch sites data
-        const sitesResponse = await fetch('http://localhost:3001/api/db/sites');
+        console.log('🏗️ Fetching sites from:', getApiUrl(API_ENDPOINTS.SITES));
+        const sitesResponse = await fetch(getApiUrl(API_ENDPOINTS.SITES));
+        console.log('🏗️ Sites response status:', sitesResponse.status);
         if (sitesResponse.ok) {
           const sitesResult = await sitesResponse.json();
+          console.log('🏗️ Sites API result:', sitesResult);
+          
           if (sitesResult.success) {
             // Transform database data to match component interface
             const transformedSites: Site[] = sitesResult.data.map(
