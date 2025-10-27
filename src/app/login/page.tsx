@@ -4,12 +4,13 @@ import { useRouter } from 'next/navigation';
 
 import { Login } from '@/components/Login';
 import { useAuth } from '@/lib/auth-context';
+import type { UserWithOrganization } from '@/types';
 
 export default function LoginPage() {
   const { login } = useAuth();
   const router = useRouter();
 
-  const handleLogin = (userData: import('@/types').UserWithOrganization) => {
+  const handleLogin = (userData: UserWithOrganization) => {
     login(userData);
     router.push('/dashboard');
   };
