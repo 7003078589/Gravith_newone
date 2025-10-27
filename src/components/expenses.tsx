@@ -460,8 +460,8 @@ export function ExpensesPage({ filterBySite }: ExpensesPageProps = {}) {
             <Card className="w-full overflow-hidden">
               <CardContent className="p-0">
                 <DataTable
-                  columns={expenseColumns as any}
-                  data={filteredExpenses as any}
+                  columns={expenseColumns as unknown as any}
+                  data={filteredExpenses as unknown as any}
                   onSort={tableState.setSortField}
                   onPageChange={tableState.setCurrentPage}
                   pageSize={tableState.itemsPerPage}
