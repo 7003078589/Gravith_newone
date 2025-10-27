@@ -173,9 +173,14 @@ export function VendorsPage() {
     const fetchVendors = async () => {
       try {
         setIsLoading(true);
+        console.log('🏪 Fetching vendors from:', getApiUrl(API_ENDPOINTS.VENDORS));
         const response = await fetch(getApiUrl(API_ENDPOINTS.VENDORS));
+        console.log('🏪 Vendors response status:', response.status);
+        
         if (response.ok) {
           const result = await response.json();
+          console.log('🏪 Vendors API result:', result);
+          
           if (result.success) {
             // Transform database data to match component interface
             const transformedVendors: Vendor[] = result.data.map(

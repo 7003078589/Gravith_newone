@@ -123,9 +123,14 @@ export function VehiclesPage({
         setIsLoading(true);
 
         // Fetch vehicles data
+        console.log('🚛 Fetching vehicles from:', getApiUrl(API_ENDPOINTS.VEHICLES));
         const vehiclesResponse = await fetch(getApiUrl(API_ENDPOINTS.VEHICLES));
+        console.log('🚛 Vehicles response status:', vehiclesResponse.status);
+        
         if (vehiclesResponse.ok) {
           const vehiclesResult = await vehiclesResponse.json();
+          console.log('🚛 Vehicles API result:', vehiclesResult);
+          
           if (vehiclesResult.success) {
             // Transform database data to match component interface
             const transformedVehicles: Vehicle[] = vehiclesResult.data.map(

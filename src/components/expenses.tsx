@@ -189,9 +189,14 @@ export function ExpensesPage({ filterBySite }: ExpensesPageProps = {}) {
     const fetchExpenses = async () => {
       try {
         setIsLoading(true);
+        console.log('💰 Fetching expenses from:', getApiUrl(API_ENDPOINTS.EXPENSES));
         const response = await fetch(getApiUrl(API_ENDPOINTS.EXPENSES));
+        console.log('💰 Expenses response status:', response.status);
+        
         if (response.ok) {
           const result = await response.json();
+          console.log('💰 Expenses API result:', result);
+          
           if (result.success) {
             // Transform database data to match component interface
             const transformedExpenses: Expense[] = result.data.map(
