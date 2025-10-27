@@ -15,7 +15,7 @@ export const getApiUrl = (endpoint: string): string => {
   // Debug logging
   console.log('🔧 API Config Debug:', {
     NODE_ENV: process.env.NODE_ENV,
-    VERCEL: process.env.VERCEL,
+    VERCEL: process.env['VERCEL'],
     hostname: typeof window !== 'undefined' ? window.location.hostname : 'server-side',
     isProduction,
     baseUrl,
