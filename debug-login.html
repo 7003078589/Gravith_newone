@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Debug Login</title>
+</head>
+<body>
+    <h1>Debug Login Test</h1>
+    <form id="loginForm">
+        <div>
+            <label>Username:</label>
+            <input type="text" id="username" value="admin" />
+        </div>
+        <div>
+            <label>Password:</label>
+            <input type="password" id="password" value="admin123" />
+        </div>
+        <button type="submit">Login</button>
+    </form>
+    <div id="result"></div>
+
+    <script>
+        // Mock AuthService
+        const AuthService = {
+            async login(credentials) {
+                console.log('Login attempt:', credentials);
+                
+                const mockUsers = [
+                    {
+                        id: 'user1',
+                        username: 'admin',
+                        email: 'admin@gavithconstruction.com',
+                        firstName: 'Admin',
+                        lastName: 'User',
+                        role: 'admin',
+                        organizationId: 'org1',
+                        organizationRole: 'owner',
+                        isActive: true,
+                        createdAt: '2024-01-01T00:00:00Z',
+                        updatedAt: '2024-01-01T00:00:00Z',
+                    }
+                ];
+
+                const mockOrganizations = [
+                    {
+                        id: 'org1',
+                        name: 'Gavith Construction Pvt. Ltd.',
+                        subscription: 'premium',
+                        isActive: true,
+                        createdAt: '2024-01-01T00:00:00Z',
+                        updatedAt: '2024-01-01T00:00:00Z',
+                        createdBy: 'system',
+                    }
+                ];
+
+                const userCredentials = [
+                    { username: 'admin', password: 'admin123' },
+                    { username: 'manager', password: 'manager123' },
+                    { username: 'engineer', password: 'engineer123' },
+                ];
+
+                const credMatch = userCredentials.find(
+                    (c) => c.username === credentials.username && c.password === credentials.password
+                );
+
+                if (!credMatch) {
+                    return {
+                        success: false,
+                        error: 'Invalid username or password',
+                    };
+                }
+
+                const user = mockUsers.find((u) => u.username === credentials.username);
+                const organization = mockOrganizations.find((o) => o.id === user?.organizationId);
+
+                if (!user || !organization) {
+                    return {
+                        success: false,
+                        error: 'User or organization not found',
+                    };
+                }
+
+                if (!user.isActive) {
+                    return {
+                        success: false,
+                        error: 'User account is inactive. Please contact your administrator.',
+                    };
+                }
+
+                return {
+                    success: true,
+                    data: {
+                        user,
+                        organization,
+                    },
+                };
+            }
+        };
+
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            
+            console.log('Form submitted:', { username, password });
+            
+            try {
+                const response = await AuthService.login({ username, password });
+                console.log('Response:', response);
+                
+                const resultDiv = document.getElementById('result');
+                if (response.success) {
+                    resultDiv.innerHTML = `
+                        <h3>✅ Login Successful!</h3>
+                        <p>User: ${response.data.user.firstName} ${response.data.user.lastName}</p>
+                        <p>Organization: ${response.data.organization.name}</p>
+                        <p>Role: ${response.data.user.role}</p>
+                    `;
+                } else {
+                    resultDiv.innerHTML = `<h3>❌ Login Failed: ${response.error}</h3>`;
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                document.getElementById('result').innerHTML = `<h3>❌ Error: ${error.message}</h3>`;
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,28 @@
+[
+  {
+    "url": "http://localhost:3001/",
+    "isRepresentativeRun": true,
+    "htmlPath": "/Users/sharun/Documents/cursor/gavith-build/reports/lhci/localhost-_-2025_10_03_01_01_45.report.html",
+    "jsonPath": "/Users/sharun/Documents/cursor/gavith-build/reports/lhci/localhost-_-2025_10_03_01_01_45.report.json",
+    "summary": {
+      "performance": 0.74,
+      "accessibility": 0.98,
+      "best-practices": 1,
+      "seo": 1,
+      "pwa": 0.38
+    }
+  },
+  {
+    "url": "http://localhost:3001/dashboard",
+    "isRepresentativeRun": true,
+    "htmlPath": "/Users/sharun/Documents/cursor/gavith-build/reports/lhci/localhost-_dashboard-2025_10_03_01_02_00.report.html",
+    "jsonPath": "/Users/sharun/Documents/cursor/gavith-build/reports/lhci/localhost-_dashboard-2025_10_03_01_02_00.report.json",
+    "summary": {
+      "performance": 0.88,
+      "accessibility": 0.86,
+      "best-practices": 1,
+      "seo": 1,
+      "pwa": 0.38
+    }
+  }
+]

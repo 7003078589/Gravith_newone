@@ -1,0 +1,54 @@
+# Middleware Configuration (middleware.ts)
+
+## Public Routes Allowlist
+The following routes are configured as public (no authentication required):
+
+```typescript
+const PUBLIC_PATHS = [
+  '/login',
+  '/signup', 
+  '/materials/modern',
+  '/materials/new',
+  '/home'
+];
+```
+
+## Middleware Implementation
+```typescript
+export function middleware(request: NextRequest) {
+  const { pathname } = request.nextUrl;
+  
+  // Allow public paths
+  if (PUBLIC_PATHS.includes(pathname)) {
+    return NextResponse.next();
+  }
+  
+  // Allow static files and API routes
+  if (
+    pathname.startsWith('/_next') ||
+    pathname.startsWith('/api') ||
+    pathname.startsWith('/static') ||
+    pathname.includes('.')
+  ) {
+    return NextResponse.next();
+  }
+  
+  // For all other routes, continue with normal processing
+  return NextResponse.next();
+}
+```
+
+## Matcher Configuration
+```typescript
+export const config = {
+  matcher: [
+    '/((?!api|_next/static|_next/image|favicon.ico).*)',
+  ],
+};
+```
+
+## Status
+- ✅ Public routes are accessible without authentication
+- ✅ Static files and API routes are properly excluded
+- ✅ All other routes continue with normal processing
+- ✅ No blocking middleware that could cause issues

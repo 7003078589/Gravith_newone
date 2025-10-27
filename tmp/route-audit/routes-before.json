@@ -1,0 +1,148 @@
+[
+  {
+    "path": "/work-progress",
+    "filePath": "src/app/work-progress/page.tsx",
+    "status": 500,
+    "finalUrl": "http://localhost:3003/work-progress",
+    "note": "Server Error"
+  },
+  {
+    "path": "/vendors",
+    "filePath": "src/app/vendors/page.tsx",
+    "status": 500,
+    "finalUrl": "http://localhost:3003/vendors",
+    "note": "Server Error"
+  },
+  {
+    "path": "/vehicles",
+    "filePath": "src/app/vehicles/page.tsx",
+    "status": 500,
+    "finalUrl": "http://localhost:3003/vehicles",
+    "note": "Server Error"
+  },
+  {
+    "path": "/sites",
+    "filePath": "src/app/sites/page.tsx",
+    "status": 500,
+    "finalUrl": "http://localhost:3003/sites",
+    "note": "Server Error"
+  },
+  {
+    "path": "/signup",
+    "filePath": "src/app/signup/page.tsx",
+    "status": 500,
+    "finalUrl": "http://localhost:3003/signup",
+    "note": "Server Error"
+  },
+  {
+    "path": "/settings",
+    "filePath": "src/app/settings/page.tsx",
+    "status": 500,
+    "finalUrl": "http://localhost:3003/settings",
+    "note": "Server Error"
+  },
+  {
+    "path": "/scheduling",
+    "filePath": "src/app/scheduling/page.tsx",
+    "status": 500,
+    "finalUrl": "http://localhost:3003/scheduling",
+    "note": "Server Error"
+  },
+  {
+    "path": "/reports",
+    "filePath": "src/app/reports/page.tsx",
+    "status": 500,
+    "finalUrl": "http://localhost:3003/reports",
+    "note": "Server Error"
+  },
+  {
+    "path": "/purchase",
+    "filePath": "src/app/purchase/page.tsx",
+    "status": 500,
+    "finalUrl": "http://localhost:3003/purchase",
+    "note": "Server Error"
+  },
+  {
+    "path": "/payments",
+    "filePath": "src/app/payments/page.tsx",
+    "status": 500,
+    "finalUrl": "http://localhost:3003/payments",
+    "note": "Server Error"
+  },
+  {
+    "path": "/organization",
+    "filePath": "src/app/organization/page.tsx",
+    "status": 500,
+    "finalUrl": "http://localhost:3003/organization",
+    "note": "Server Error"
+  },
+  {
+    "path": "/login",
+    "filePath": "src/app/login/page.tsx",
+    "status": 500,
+    "finalUrl": "http://localhost:3003/login",
+    "note": "Server Error"
+  },
+  {
+    "path": "/materials",
+    "filePath": "src/app/materials/page.tsx",
+    "status": 500,
+    "finalUrl": "http://localhost:3003/materials",
+    "note": "Server Error"
+  },
+  {
+    "path": "/home",
+    "filePath": "src/app/home/page.tsx",
+    "status": 500,
+    "finalUrl": "http://localhost:3003/home",
+    "note": "Server Error"
+  },
+  {
+    "path": "/dashboard",
+    "filePath": "src/app/dashboard/page.tsx",
+    "status": 500,
+    "finalUrl": "http://localhost:3003/dashboard",
+    "note": "Server Error"
+  },
+  {
+    "path": "/expenses",
+    "filePath": "src/app/expenses/page.tsx",
+    "status": 500,
+    "finalUrl": "http://localhost:3003/expenses",
+    "note": "Server Error"
+  },
+  {
+    "path": "/work-progress/activity",
+    "filePath": "src/app/work-progress/activity/page.tsx",
+    "status": 500,
+    "finalUrl": "http://localhost:3003/work-progress/activity",
+    "note": "Server Error"
+  },
+  {
+    "path": "/organization/setup",
+    "filePath": "src/app/organization/setup/page.tsx",
+    "status": 500,
+    "finalUrl": "http://localhost:3003/organization/setup",
+    "note": "Server Error"
+  },
+  {
+    "path": "/materials/new",
+    "filePath": "src/app/materials/new/page.tsx",
+    "status": 500,
+    "finalUrl": "http://localhost:3003/materials/new",
+    "note": "Server Error"
+  },
+  {
+    "path": "/materials/modern",
+    "filePath": "src/app/materials/modern/page.tsx",
+    "status": 500,
+    "finalUrl": "http://localhost:3003/materials/modern",
+    "note": "Server Error"
+  },
+  {
+    "path": "/",
+    "status": 500,
+    "finalUrl": "http://localhost:3003/",
+    "note": "Server Error"
+  }
+]

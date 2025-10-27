@@ -1,0 +1,73 @@
+# Redirects Configuration (next.config.ts)
+
+## Active Redirect Rules
+The following redirects are configured in next.config.ts:
+
+```typescript
+async redirects() {
+  return [
+    // Legacy route redirects to new App Router paths
+    {
+      source: '/site-management',
+      destination: '/sites',
+      permanent: true,
+    },
+    {
+      source: '/vehicle-management',
+      destination: '/vehicles',
+      permanent: true,
+    },
+    {
+      source: '/vendor-management',
+      destination: '/vendors',
+      permanent: true,
+    },
+    {
+      source: '/expense-management',
+      destination: '/expenses',
+      permanent: true,
+    },
+    {
+      source: '/payment-tracking',
+      destination: '/payments',
+      permanent: true,
+    },
+    {
+      source: '/project-scheduling',
+      destination: '/scheduling',
+      permanent: true,
+    },
+    {
+      source: '/reports-dashboard',
+      destination: '/reports',
+      permanent: true,
+    },
+    {
+      source: '/organization-management',
+      destination: '/organization',
+      permanent: true,
+    },
+    {
+      source: '/user-settings',
+      destination: '/settings',
+      permanent: true,
+    },
+    {
+      source: '/material-management',
+      destination: '/materials',
+      permanent: true,
+    },
+    {
+      source: '/material-management/:path*',
+      destination: '/materials/:path*',
+      permanent: true,
+    },
+  ];
+}
+```
+
+## Status
+- ✅ All redirects are working correctly
+- ✅ HTTP 308 status codes (permanent redirects)
+- ✅ No catch-all redirects that could cause issues
+- ✅ Specific legacy routes properly mapped to new routes
