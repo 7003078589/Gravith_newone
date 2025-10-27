@@ -15,6 +15,7 @@ import React, { useState, useEffect } from 'react';
 
 import { useDialogState } from '../lib/hooks/useDialogState';
 import { useTableState } from '../lib/hooks/useTableState';
+import { getApiUrl, API_ENDPOINTS } from '@/lib/api-config';
 
 import { DataTable } from './common/DataTable';
 import { FormDialog } from './common/FormDialog';
