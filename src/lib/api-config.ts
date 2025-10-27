@@ -3,7 +3,7 @@ export const getApiUrl = (endpoint: string): string => {
   // Check if we're in production (Vercel) or development
   const isProduction = 
     process.env.NODE_ENV === 'production' || 
-    process.env.VERCEL === '1' ||
+    process.env['VERCEL'] === '1' ||
     (typeof window !== 'undefined' && window.location.hostname.includes('vercel.app'));
   
   // In production (Vercel), API calls go to the same domain
