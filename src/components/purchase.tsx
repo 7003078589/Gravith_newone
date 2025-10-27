@@ -51,7 +51,7 @@ export function PurchasePage({ filterBySite }: PurchasePageProps = {}) {
     const fetchPurchases = async () => {
       try {
         setIsLoading(true);
-        const response = await fetch('http://localhost:3001/api/db/purchases');
+        const response = await fetch(getApiUrl(API_ENDPOINTS.PURCHASES));
         if (response.ok) {
           const result = await response.json();
           if (result.success) {

@@ -1,13 +1,29 @@
 // API configuration for different environments
 export const getApiUrl = (endpoint: string): string => {
+  // Check if we're in production (Vercel) or development
+  const isProduction = 
+    process.env.NODE_ENV === 'production' || 
+    process.env.VERCEL === '1' ||
+    (typeof window !== 'undefined' && window.location.hostname.includes('vercel.app'));
+  
   // In production (Vercel), API calls go to the same domain
   // In development, they go to localhost:3001
-  const baseUrl =
-    process.env.NODE_ENV === 'production'
-      ? '' // Same domain in production
-      : 'http://localhost:3001'; // Local backend in development
+  const baseUrl = isProduction ? '' : 'http://localhost:3001';
+  
+  const fullUrl = `${baseUrl}${endpoint}`;
+  
+  // Debug logging
+  console.log('🔧 API Config Debug:', {
+    NODE_ENV: process.env.NODE_ENV,
+    VERCEL: process.env.VERCEL,
+    hostname: typeof window !== 'undefined' ? window.location.hostname : 'server-side',
+    isProduction,
+    baseUrl,
+    endpoint,
+    fullUrl
+  });
 
-  return `${baseUrl}${endpoint}`;
+  return fullUrl;
 };
 
 // Specific API endpoints
