@@ -13,7 +13,7 @@ import {
   Receipt,
 } from 'lucide-react';
 
-import { DataTable } from '@/components/common/DataTable';
+import { DataTable, type DataTableColumn } from '@/components/common/DataTable';
 import { FormDialog } from '@/components/common/FormDialog';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -460,8 +460,8 @@ export function ExpensesPage({ filterBySite }: ExpensesPageProps = {}) {
             <Card className="w-full overflow-hidden">
               <CardContent className="p-0">
                 <DataTable
-                  columns={expenseColumns as unknown as any}
-                  data={filteredExpenses as unknown as any}
+                  columns={expenseColumns as unknown as DataTableColumn<Record<string, unknown>>[]}
+                  data={filteredExpenses as unknown as Record<string, unknown>[]}
                   onSort={tableState.setSortField}
                   onPageChange={tableState.setCurrentPage}
                   pageSize={tableState.itemsPerPage}
