@@ -623,13 +623,13 @@ export function WorkProgressPage({ filterBySite }: WorkProgressProps) {
                                     console.log('🔧 Work type changed:', value);
                                     setWorkProgressForm((prev) => ({ ...prev, workType: value }));
                                     // Clear error when user makes a selection
-                                    if (formErrors.workType) {
+                                    if (formErrors['workType']) {
                                       setFormErrors((prev) => ({ ...prev, workType: '' }));
                                     }
                                   }}
                                 >
                                   <SelectTrigger
-                                    className={formErrors.workType ? 'border-red-500' : ''}
+                                    className={formErrors['workType'] ? 'border-red-500' : ''}
                                   >
                                     <SelectValue placeholder="Select work type" />
                                   </SelectTrigger>
@@ -644,8 +644,8 @@ export function WorkProgressPage({ filterBySite }: WorkProgressProps) {
                                     <SelectItem value="Plastering">Plastering</SelectItem>
                                   </SelectContent>
                                 </Select>
-                                {formErrors.workType && (
-                                  <p className="text-sm text-red-500">{formErrors.workType}</p>
+                                {formErrors['workType'] && (
+                                  <p className="text-sm text-red-500">{formErrors['workType']}</p>
                                 )}
                               </div>
                               <div className="space-y-2">
@@ -683,13 +683,13 @@ export function WorkProgressPage({ filterBySite }: WorkProgressProps) {
                                   setSelectedMaterial('');
                                   setMaterialQuantity(0);
                                   // Clear error when user makes a selection
-                                  if (formErrors.siteId) {
+                                  if (formErrors['siteId']) {
                                     setFormErrors((prev) => ({ ...prev, siteId: '' }));
                                   }
                                 }}
                               >
                                 <SelectTrigger
-                                  className={formErrors.siteId ? 'border-red-500' : ''}
+                                  className={formErrors['siteId'] ? 'border-red-500' : ''}
                                 >
                                   <SelectValue placeholder="Select site" />
                                 </SelectTrigger>
@@ -701,8 +701,8 @@ export function WorkProgressPage({ filterBySite }: WorkProgressProps) {
                                   ))}
                                 </SelectContent>
                               </Select>
-                              {formErrors.siteId && (
-                                <p className="text-sm text-red-500">{formErrors.siteId}</p>
+                              {formErrors['siteId'] && (
+                                <p className="text-sm text-red-500">{formErrors['siteId']}</p>
                               )}
                             </div>
 
@@ -717,16 +717,16 @@ export function WorkProgressPage({ filterBySite }: WorkProgressProps) {
                                     description: e.target.value,
                                   }));
                                   // Clear error when user types
-                                  if (formErrors.description) {
+                                  if (formErrors['description']) {
                                     setFormErrors((prev) => ({ ...prev, description: '' }));
                                   }
                                 }}
-                                className={formErrors.description ? 'border-red-500' : ''}
+                                className={formErrors['description'] ? 'border-red-500' : ''}
                                 required
                                 rows={3}
                               />
-                              {formErrors.description && (
-                                <p className="text-sm text-red-500">{formErrors.description}</p>
+                              {formErrors['description'] && (
+                                <p className="text-sm text-red-500">{formErrors['description']}</p>
                               )}
                             </div>
                           </div>
@@ -745,13 +745,13 @@ export function WorkProgressPage({ filterBySite }: WorkProgressProps) {
                                   onValueChange={(value) => {
                                     setWorkProgressForm((prev) => ({ ...prev, unit: value }));
                                     // Clear error when user makes a selection
-                                    if (formErrors.unit) {
+                                    if (formErrors['unit']) {
                                       setFormErrors((prev) => ({ ...prev, unit: '' }));
                                     }
                                   }}
                                 >
                                   <SelectTrigger
-                                    className={formErrors.unit ? 'border-red-500' : ''}
+                                    className={formErrors['unit'] ? 'border-red-500' : ''}
                                   >
                                     <SelectValue placeholder="Select unit" />
                                   </SelectTrigger>
@@ -764,8 +764,8 @@ export function WorkProgressPage({ filterBySite }: WorkProgressProps) {
                                     <SelectItem value="cft">Cubic Feet (cft)</SelectItem>
                                   </SelectContent>
                                 </Select>
-                                {formErrors.unit && (
-                                  <p className="text-sm text-red-500">{formErrors.unit}</p>
+                                {formErrors['unit'] && (
+                                  <p className="text-sm text-red-500">{formErrors['unit']}</p>
                                 )}
                               </div>
                               <div className="space-y-2">
@@ -781,15 +781,17 @@ export function WorkProgressPage({ filterBySite }: WorkProgressProps) {
                                       totalQuantity: parseFloat(e.target.value) || 0,
                                     }));
                                     // Clear error when user types
-                                    if (formErrors.totalQuantity) {
+                                    if (formErrors['totalQuantity']) {
                                       setFormErrors((prev) => ({ ...prev, totalQuantity: '' }));
                                     }
                                   }}
-                                  className={formErrors.totalQuantity ? 'border-red-500' : ''}
+                                  className={formErrors['totalQuantity'] ? 'border-red-500' : ''}
                                   required
                                 />
-                                {formErrors.totalQuantity && (
-                                  <p className="text-sm text-red-500">{formErrors.totalQuantity}</p>
+                                {formErrors['totalQuantity'] && (
+                                  <p className="text-sm text-red-500">
+                                    {formErrors['totalQuantity']}
+                                  </p>
                                 )}
                               </div>
                             </div>
