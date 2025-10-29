@@ -243,16 +243,16 @@ export function WorkProgressPage({ filterBySite }: WorkProgressProps) {
       errors['siteId'] = 'Please select a site';
     }
     if (!workProgressForm.description.trim()) {
-      errors.description = 'Please enter a description';
+      errors['description'] = 'Please enter a description';
     }
     if (!workProgressForm.date) {
-      errors.date = 'Please select a date';
+      errors['date'] = 'Please select a date';
     }
     if (!workProgressForm.unit) {
-      errors.unit = 'Please select a unit';
+      errors['unit'] = 'Please select a unit';
     }
     if (!workProgressForm.totalQuantity || workProgressForm.totalQuantity <= 0) {
-      errors.totalQuantity = 'Please enter a valid total quantity';
+      errors['totalQuantity'] = 'Please enter a valid total quantity';
     }
 
     // If there are validation errors, show them and stop submission
