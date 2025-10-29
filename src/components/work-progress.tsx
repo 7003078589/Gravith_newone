@@ -22,7 +22,7 @@ import {
   Upload,
 } from 'lucide-react';
 import Image from 'next/image';
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useCallback, useEffect } from 'react';
 
 import { DataTable } from '@/components/common/DataTable';
 import { FormDialog } from '@/components/common/FormDialog';
