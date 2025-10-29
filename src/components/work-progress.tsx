@@ -237,10 +237,10 @@ export function WorkProgressPage({ filterBySite }: WorkProgressProps) {
     const errors: Record<string, string> = {};
 
     if (!workProgressForm.workType) {
-      errors.workType = 'Please select a work type';
+      errors['workType'] = 'Please select a work type';
     }
     if (!workProgressForm.siteId) {
-      errors.siteId = 'Please select a site';
+      errors['siteId'] = 'Please select a site';
     }
     if (!workProgressForm.description.trim()) {
       errors.description = 'Please enter a description';
