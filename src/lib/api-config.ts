@@ -34,6 +34,7 @@ export const API_ENDPOINTS = {
   SITES: '/api/db/sites',
   VEHICLES: '/api/db/vehicles',
   VENDORS: '/api/db/vendors',
+  WORK_PROGRESS: '/api/db/work-progress',
   SUMMARY: '/api/db/summary',
 
   // Auth endpoints

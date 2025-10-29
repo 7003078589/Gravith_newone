@@ -1,34 +1,8 @@
-// Test API endpoints
-const testApi = async () => {
-  try {
-    console.log('Testing API endpoints...');
-    
-    // Test vehicles endpoint
-    const response = await fetch('/api/db/vehicles');
-    console.log('Vehicles API Status:', response.status);
-    
-    if (response.ok) {
-      const data = await response.json();
-      console.log('Vehicles API Response:', data);
-    } else {
-      console.error('Vehicles API Error:', response.statusText);
-    }
-    
-    // Test vendors endpoint
-    const vendorsResponse = await fetch('/api/db/vendors');
-    console.log('Vendors API Status:', vendorsResponse.status);
-    
-    if (vendorsResponse.ok) {
-      const vendorsData = await vendorsResponse.json();
-      console.log('Vendors API Response:', vendorsData);
-    } else {
-      console.error('Vendors API Error:', vendorsResponse.statusText);
-    }
-    
-  } catch (error) {
-    console.error('API Test Error:', error);
-  }
-};
+// Test script to check API configuration
+const { getApiUrl, API_ENDPOINTS } = require('./src/lib/api-config.ts');
 
-// Run test
-testApi();
+console.log('Testing API configuration:');
+console.log('NODE_ENV:', process.env.NODE_ENV);
+console.log('VERCEL:', process.env.VERCEL);
+console.log('API_ENDPOINTS.VENDORS:', API_ENDPOINTS.VENDORS);
+console.log('Generated URL:', getApiUrl(API_ENDPOINTS.VENDORS));

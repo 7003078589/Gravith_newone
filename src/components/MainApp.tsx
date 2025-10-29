@@ -125,6 +125,14 @@ export function MainApp({ initialPage = 'home' }: MainAppProps) {
   const [currentPage, setCurrentPage] = useState<AppPage>(initialPage);
   const [selectedSite, setSelectedSite] = useState<string>('1');
   const { isLoggedIn, login, logout } = useAuth();
+  
+  // Force cache bust with timestamp and random number
+  const cacheBustTimestamp = new Date().toISOString();
+  const randomId = Math.random().toString(36).substr(2, 9);
+  console.log('🔥🔥🔥 MainApp component loaded at:', cacheBustTimestamp);
+  console.log('🔥🔥🔥 Cache bust timestamp:', cacheBustTimestamp);
+  console.log('🔥🔥🔥 Random ID:', randomId);
+  console.log('🔥🔥🔥 Component version: 2.0.0-cache-bust');
 
   const handleLogin = (userData?: UserWithOrganization) => {
     if (userData) {
@@ -139,8 +147,35 @@ export function MainApp({ initialPage = 'home' }: MainAppProps) {
   };
 
   const handleNavigate = (page: AppPage) => {
+    console.log('🚀🚀🚀 Navigating to page:', page);
+    console.log('🚀🚀🚀 Current page before navigation:', currentPage);
     setCurrentPage(page);
+    console.log('🚀🚀🚀 Page set to:', page);
   };
+
+  // Force re-render on mount
+  React.useEffect(() => {
+    console.log('🔥🔥🔥 MainApp useEffect triggered - forcing re-render');
+    console.log('🔥🔥🔥 Current page in useEffect:', currentPage);
+    
+    // Just log the cache bust info without forcing reloads
+    if (typeof window !== 'undefined') {
+      (window as any).mainAppCacheBust = cacheBustTimestamp;
+      console.log('🔥🔥🔥 Set window.mainAppCacheBust to:', cacheBustTimestamp);
+      
+      // Listen for custom navigation events from Dashboard
+      const handleCustomNavigate = (event: CustomEvent) => {
+        console.log('🔥🔥🔥 Received custom navigate event:', event.detail);
+        handleNavigate(event.detail as AppPage);
+      };
+      
+      window.addEventListener('navigate', handleCustomNavigate as EventListener);
+      
+      return () => {
+        window.removeEventListener('navigate', handleCustomNavigate as EventListener);
+      };
+    }
+  }, [currentPage, cacheBustTimestamp]);
 
   // Show homepage if not logged in and on home page
   if (!isLoggedIn && currentPage === 'home') {
@@ -160,7 +195,7 @@ export function MainApp({ initialPage = 'home' }: MainAppProps) {
   // Show main application with sidebar
   if (isLoggedIn) {
     return (
-      <MaterialsProvider>
+      <MaterialsProvider key={`mainapp-${cacheBustTimestamp}-${randomId}`}>
         <SidebarProvider>
           <div className="flex h-screen w-full bg-gray-50">
             <MainSidebar
@@ -239,10 +274,18 @@ export function MainApp({ initialPage = 'home' }: MainAppProps) {
                 </div>
               </div>
               <div className="min-h-full w-full max-w-none">
+                {console.log('Rendering page:', currentPage)}
                 {currentPage === 'dashboard' && (
                   <div className="p-6 w-full">
                     <Dashboard
-                      onNavigate={(section: string) => handleNavigate(section as AppPage)}
+                      key={`dashboard-${cacheBustTimestamp}-${randomId}`}
+                      onNavigate={(section: string) => {
+                        console.log('🚀🚀🚀 Dashboard onNavigate called with:', section);
+                        console.log('🚀🚀🚀 Current page before navigation:', currentPage);
+                        console.log('🚀🚀🚀 Calling handleNavigate...');
+                        handleNavigate(section as AppPage);
+                        console.log('🚀🚀🚀 handleNavigate completed');
+                      }}
                     />
                   </div>
                 )}

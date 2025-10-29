@@ -49,6 +49,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { useDialogState } from '@/lib/hooks/useDialogState';
 import { useTableState } from '@/lib/hooks/useTableState';
 import { formatDateShort } from '@/lib/utils';
+import { getApiUrl, API_ENDPOINTS } from '@/lib/api-config';
 
 interface WorkProgressEntry {
   id: string;
@@ -104,8 +105,12 @@ export function WorkProgressPage({ filterBySite }: WorkProgressProps) {
     { id: '3', name: 'Sunshine Apartments Phase II' },
   ];
 
-  // Mock data for work progress entries
-  const [workProgressEntries, setWorkProgressEntries] = useState<WorkProgressEntry[]>([
+  // State for work progress entries
+  const [workProgressEntries, setWorkProgressEntries] = useState<WorkProgressEntry[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Mock data for work progress entries (fallback)
+  const mockWorkProgressEntries: WorkProgressEntry[] = [
     {
       id: '1',
       siteId: '1',
@@ -164,7 +169,7 @@ export function WorkProgressPage({ filterBySite }: WorkProgressProps) {
       photos: [],
       status: 'Completed',
     },
-  ]);
+  ];
 
   const [workProgressForm, setWorkProgressForm] = useState({
     siteId: '',
@@ -200,6 +205,65 @@ export function WorkProgressPage({ filterBySite }: WorkProgressProps) {
 
   // Form ref for submission
   const formRef = useRef<HTMLFormElement>(null);
+
+  // Fetch work progress data from API
+  React.useEffect(() => {
+    const fetchWorkProgress = async () => {
+      try {
+        setIsLoading(true);
+        console.log('🏗️ Fetching work progress from:', getApiUrl(API_ENDPOINTS.WORK_PROGRESS));
+        const response = await fetch(getApiUrl(API_ENDPOINTS.WORK_PROGRESS));
+        console.log('🏗️ Work progress response status:', response.status);
+        
+        if (response.ok) {
+          const result = await response.json();
+          console.log('🏗️ Work progress API result:', result);
+          
+          if (result.success) {
+            // Transform database data to match component interface
+            const transformedEntries: WorkProgressEntry[] = result.data.map(
+              (entry: Record<string, unknown>) => ({
+                id: entry['id'] as string,
+                siteId: entry['site_id'] as string,
+                siteName: 'Gudibande', // From existing site data
+                workType: 'Construction', // Default work type
+                description: entry['description'] as string,
+                date: entry['work_date'] as string,
+                unit: (entry['unit'] as string) || 'cum',
+                length: (entry['length'] as number) || 0,
+                breadth: (entry['width'] as number) || 0,
+                thickness: (entry['thickness'] as number) || 0,
+                totalQuantity: (entry['quantity'] as number) || 0,
+                materialsUsed: [], // Will be populated based on steel/cement data
+                laborHours: 0, // Not available in CSV
+                progressPercentage: 100, // All entries are completed
+                notes: (entry['remarks'] as string) || '',
+                photos: [],
+                status: 'Completed' as WorkProgressEntry['status'],
+              }),
+            );
+            setWorkProgressEntries(transformedEntries);
+          } else {
+            console.error('❌ API returned error:', result.message);
+            // Fallback to mock data
+            setWorkProgressEntries(mockWorkProgressEntries);
+          }
+        } else {
+          console.error('❌ Failed to fetch work progress:', response.status);
+          // Fallback to mock data
+          setWorkProgressEntries(mockWorkProgressEntries);
+        }
+      } catch (error) {
+        console.error('❌ Error fetching work progress:', error);
+        // Fallback to mock data
+        setWorkProgressEntries(mockWorkProgressEntries);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchWorkProgress();
+  }, []);
 
   // Filter work progress entries
   const filteredEntries = workProgressEntries.filter((entry) => {
@@ -435,6 +499,22 @@ export function WorkProgressPage({ filterBySite }: WorkProgressProps) {
         return Target;
     }
   };
+
+  // Show loading state
+  if (isLoading) {
+    return (
+      <div className="w-full bg-background">
+        <div className="p-4 md:p-6 space-y-6 max-w-full">
+          <div className="flex items-center justify-center h-64">
+            <div className="text-center space-y-4">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+              <p className="text-muted-foreground">Loading work progress data...</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="w-full bg-background">

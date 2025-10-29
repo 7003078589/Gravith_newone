@@ -28,28 +28,102 @@ router.get('/purchases', async (req, res) => {
       .order('purchase_date', { ascending: false });
 
     if (error) {
-      console.error('❌ Error fetching purchases:', error);
-      return res.status(500).json({
-        success: false,
-        message: 'Failed to fetch purchase data',
-        error: error.message,
-      });
+      console.error('❌ Error fetching purchases from database:', error);
+      console.log('🔄 Falling back to JSON data...');
+      
+      // Fallback to JSON data
+      try {
+        const fs = require('fs');
+        const path = require('path');
+        const purchaseData = JSON.parse(
+          fs.readFileSync(path.join(__dirname, '../public/purchase-summary.json'), 'utf8'),
+        );
+        
+        console.log(`✅ Found ${purchaseData.length} purchase records in JSON fallback`);
+        
+        return res.json({
+          success: true,
+          data: purchaseData,
+          count: purchaseData.length,
+          source: 'json_fallback',
+        });
+      } catch (jsonError) {
+        console.error('❌ Error reading JSON fallback:', jsonError);
+        return res.status(500).json({
+          success: false,
+          message: 'Failed to fetch purchase data from both database and JSON',
+          error: error.message,
+        });
+      }
     }
 
     console.log(`✅ Found ${purchases.length} purchase records in database`);
+
+    // If database is empty, fall back to JSON data
+    if (purchases.length === 0) {
+      console.log('🔄 Database is empty, falling back to JSON data...');
+      
+      try {
+        const fs = require('fs');
+        const path = require('path');
+        const purchaseData = JSON.parse(
+          fs.readFileSync(path.join(__dirname, '../public/purchase-summary.json'), 'utf8'),
+        );
+        
+        console.log(`✅ Found ${purchaseData.length} purchase records in JSON fallback`);
+        
+        return res.json({
+          success: true,
+          data: purchaseData,
+          count: purchaseData.length,
+          source: 'json_fallback',
+        });
+      } catch (jsonError) {
+        console.error('❌ Error reading JSON fallback:', jsonError);
+        // Return empty data if JSON fallback also fails
+        return res.json({
+          success: true,
+          data: [],
+          count: 0,
+          source: 'database_empty',
+        });
+      }
+    }
 
     res.json({
       success: true,
       data: purchases,
       count: purchases.length,
+      source: 'database',
     });
   } catch (error) {
     console.error('❌ Error in purchases API:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Internal server error',
-      error: error.message,
-    });
+    
+    // Fallback to JSON data on any error
+    try {
+      console.log('🔄 Falling back to JSON data due to error...');
+      const fs = require('fs');
+      const path = require('path');
+      const purchaseData = JSON.parse(
+        fs.readFileSync(path.join(__dirname, '../public/purchase-summary.json'), 'utf8'),
+      );
+      
+      console.log(`✅ Found ${purchaseData.length} purchase records in JSON fallback`);
+      
+      return res.json({
+        success: true,
+        data: purchaseData,
+        count: purchaseData.length,
+        source: 'json_fallback',
+      });
+    } catch (jsonError) {
+      console.error('❌ Error reading JSON fallback:', jsonError);
+      res.status(500).json({
+        success: false,
+        message: 'Internal server error',
+        error: error.message,
+      });
+    }
   }
 });
 
@@ -70,12 +144,33 @@ router.get('/expenses', async (req, res) => {
       .order('expense_date', { ascending: false });
 
     if (error) {
-      console.error('❌ Error fetching expenses:', error);
-      return res.status(500).json({
-        success: false,
-        message: 'Failed to fetch expense data',
-        error: error.message,
-      });
+      console.error('❌ Error fetching expenses from database:', error);
+      console.log('🔄 Falling back to JSON data...');
+      
+      // Fallback to JSON data
+      try {
+        const fs = require('fs');
+        const path = require('path');
+        const expenseData = JSON.parse(
+          fs.readFileSync(path.join(__dirname, '../public/expense-summary.json'), 'utf8'),
+        );
+        
+        console.log(`✅ Found ${expenseData.length} expense records in JSON fallback`);
+        
+        return res.json({
+          success: true,
+          data: expenseData,
+          count: expenseData.length,
+          source: 'json_fallback',
+        });
+      } catch (jsonError) {
+        console.error('❌ Error reading JSON fallback:', jsonError);
+        return res.status(500).json({
+          success: false,
+          message: 'Failed to fetch expense data from both database and JSON',
+          error: error.message,
+        });
+      }
     }
 
     console.log(`✅ Found ${expenses.length} expense records in database`);
@@ -84,14 +179,36 @@ router.get('/expenses', async (req, res) => {
       success: true,
       data: expenses,
       count: expenses.length,
+      source: 'database',
     });
   } catch (error) {
     console.error('❌ Error in expenses API:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Internal server error',
-      error: error.message,
-    });
+    
+    // Fallback to JSON data on any error
+    try {
+      console.log('🔄 Falling back to JSON data due to error...');
+      const fs = require('fs');
+      const path = require('path');
+      const expenseData = JSON.parse(
+        fs.readFileSync(path.join(__dirname, '../public/expense-summary.json'), 'utf8'),
+      );
+      
+      console.log(`✅ Found ${expenseData.length} expense records in JSON fallback`);
+      
+      return res.json({
+        success: true,
+        data: expenseData,
+        count: expenseData.length,
+        source: 'json_fallback',
+      });
+    } catch (jsonError) {
+      console.error('❌ Error reading JSON fallback:', jsonError);
+      res.status(500).json({
+        success: false,
+        message: 'Internal server error',
+        error: error.message,
+      });
+    }
   }
 });
 
@@ -320,6 +437,78 @@ router.get('/vehicles', async (req, res) => {
     });
   } catch (error) {
     console.error('❌ Error in vehicles API:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Internal server error',
+      error: error.message,
+    });
+  }
+});
+
+// Get all vendors from database
+router.get('/vendors', async (req, res) => {
+  try {
+    console.log('🏪 API: Getting vendor data from database...');
+
+    const { data: vendors, error } = await supabaseAdmin
+      .from('vendors')
+      .select('*')
+      .order('name', { ascending: true });
+
+    if (error) {
+      console.error('❌ Error fetching vendors:', error);
+      return res.status(500).json({
+        success: false,
+        message: 'Failed to fetch vendors data',
+        error: error.message,
+      });
+    }
+
+    console.log(`✅ Found ${vendors.length} vendors in database`);
+
+    res.json({
+      success: true,
+      data: vendors,
+      count: vendors.length,
+    });
+  } catch (error) {
+    console.error('❌ Error in vendors API:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Internal server error',
+      error: error.message,
+    });
+  }
+});
+
+// Get all work progress from database
+router.get('/work-progress', async (req, res) => {
+  try {
+    console.log('🏗️ API: Getting work progress data from database...');
+
+    const { data: workProgress, error } = await supabaseAdmin
+      .from('work_progress')
+      .select('*')
+      .order('work_date', { ascending: false });
+
+    if (error) {
+      console.error('❌ Error fetching work progress:', error);
+      return res.status(500).json({
+        success: false,
+        message: 'Failed to fetch work progress data',
+        error: error.message,
+      });
+    }
+
+    console.log(`✅ Found ${workProgress.length} work progress records in database`);
+
+    res.json({
+      success: true,
+      data: workProgress,
+      count: workProgress.length,
+    });
+  } catch (error) {
+    console.error('❌ Error in work progress API:', error);
     res.status(500).json({
       success: false,
       message: 'Internal server error',

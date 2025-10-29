@@ -229,7 +229,7 @@ const dashboardData = {
       description: 'Manage material database',
       icon: Database,
       color: 'bg-indigo-500',
-      action: 'material-master',
+      action: 'masters',
     },
     {
       id: '3',
@@ -253,7 +253,7 @@ const dashboardData = {
       description: 'Log site progress',
       icon: Building2,
       color: 'bg-purple-500',
-      action: 'sites',
+      action: 'work-progress',
     },
   ],
 };
@@ -263,6 +263,13 @@ interface DashboardProps {
 }
 
 export function Dashboard({ onNavigate }: DashboardProps) {
+  // Force cache bust with unique timestamp and random ID
+  const cacheBustTimestamp = new Date().toISOString();
+  const randomId = Math.random().toString(36).substr(2, 9);
+  console.log('Dashboard component loaded at:', cacheBustTimestamp);
+  console.log('onNavigate function received:', onNavigate);
+  console.log('onNavigate type:', typeof onNavigate);
+  
   const [realData, setRealData] = useState({
     totalPurchases: 0,
     totalPurchaseValue: 0,
@@ -271,28 +278,66 @@ export function Dashboard({ onNavigate }: DashboardProps) {
   });
   const [isLoading, setIsLoading] = useState(true);
 
-  // Fetch real data from database API
+  // Force re-render on mount and store onNavigate function
+  React.useEffect(() => {
+    console.log('Dashboard useEffect triggered - forcing re-render');
+    
+    // Just log the cache bust info without forcing reloads
+    if (typeof window !== 'undefined') {
+      (window as any).dashboardCacheBust = cacheBustTimestamp;
+      console.log('Set window.dashboardCacheBust to:', cacheBustTimestamp);
+      
+      // Store the onNavigate function in window object for detection
+      (window as any).currentOnNavigate = onNavigate;
+      console.log('Stored onNavigate in window.currentOnNavigate:', onNavigate);
+    }
+  }, [cacheBustTimestamp, onNavigate]);
+
+  // Fetch real data from database API with retry logic
   useEffect(() => {
-    const fetchRealData = async () => {
+    let isMounted = true;
+    
+    const fetchRealData = async (retryCount = 0) => {
       try {
         setIsLoading(true);
 
         // Fetch summary data
-        const summaryResponse = await fetch('http://localhost:3001/api/db/summary');
+        const summaryResponse = await fetch('http://localhost:3001/api/db/summary', {
+          headers: {
+            'Cache-Control': 'no-cache',
+          },
+        });
+        
         if (summaryResponse.ok) {
           const summaryResult = await summaryResponse.json();
-          if (summaryResult.success) {
+          if (summaryResult.success && isMounted) {
+            console.log('📊 Dashboard data loaded successfully');
             setRealData(summaryResult.data);
           }
+        } else {
+          throw new Error(`HTTP ${summaryResponse.status}: ${summaryResponse.statusText}`);
         }
       } catch (error) {
         console.error('Failed to fetch real data:', error);
+        
+        // Retry logic for network errors
+        if (isMounted && retryCount < 2 && error instanceof Error && error.message.includes('fetch')) {
+          console.log(`Retrying dashboard data fetch (attempt ${retryCount + 1}/2)...`);
+          setTimeout(() => fetchRealData(retryCount + 1), 1000 * (retryCount + 1));
+          return;
+        }
       } finally {
-        setIsLoading(false);
+        if (isMounted) {
+          setIsLoading(false);
+        }
       }
     };
 
     fetchRealData();
+
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   // Use real data for quick stats
@@ -523,9 +568,21 @@ export function Dashboard({ onNavigate }: DashboardProps) {
           <SectionCard
             title="Quick Actions"
             toolbar={
-              <InfoTooltip label="Information about quick actions">
-                <p>Frequently used actions for quick access</p>
-              </InfoTooltip>
+              <div className="flex items-center gap-2">
+                <InfoTooltip label="Information about quick actions">
+                  <p>Frequently used actions for quick access</p>
+                </InfoTooltip>
+                <Button 
+                  onClick={() => {
+                    console.log('🧪 Test button clicked');
+                    onNavigate?.('expenses');
+                  }}
+                  size="sm"
+                  variant="outline"
+                >
+                  Test Navigation
+                </Button>
+              </div>
             }
           >
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
@@ -533,7 +590,32 @@ export function Dashboard({ onNavigate }: DashboardProps) {
                 <Card
                   key={action.id}
                   className="group cursor-pointer transition-all hover:shadow-md hover:scale-105"
-                  onClick={() => onNavigate?.(action.action)}
+                  onClick={() => {
+                    console.log('Quick action clicked:', action.title, '->', action.action);
+                    console.log('onNavigate function:', onNavigate);
+                    console.log('onNavigate type:', typeof onNavigate);
+                    
+                    if (onNavigate && typeof onNavigate === 'function') {
+                      console.log('Calling onNavigate with:', action.action);
+                      onNavigate(action.action);
+                    } else {
+                      console.log('onNavigate not available, using direct navigation');
+                      // Direct navigation using window.location
+                      const pageMap: Record<string, string> = {
+                        'expenses': '/expenses',
+                        'masters': '/masters', 
+                        'materials': '/materials',
+                        'vehicles': '/vehicles',
+                        'work-progress': '/work-progress'
+                      };
+                      
+                      const targetPage = pageMap[action.action];
+                      if (targetPage) {
+                        console.log('Navigating directly to:', targetPage);
+                        window.location.href = targetPage;
+                      }
+                    }
+                  }}
                 >
                   <CardContent className="p-4 flex flex-col items-center text-center space-y-3">
                     <div

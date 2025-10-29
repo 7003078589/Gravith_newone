@@ -11,7 +11,7 @@ import {
   Search,
   Filter,
 } from 'lucide-react';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 
 import { useDialogState } from '../lib/hooks/useDialogState';
 import { useTableState } from '../lib/hooks/useTableState';
@@ -46,53 +46,129 @@ export function PurchasePage({ filterBySite }: PurchasePageProps = {}) {
   const { addMaterial, updateMaterial, deleteMaterial } = useMaterials();
   const [materials, setMaterials] = useState<SharedMaterial[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  // Fetch real purchase data from database API
+  // Memoized data transformation function
+  const transformPurchaseData = useCallback((purchase: Record<string, unknown>): SharedMaterial => {
+    console.log('🔄 Transforming purchase data:', purchase);
+    
+    // Handle both database structure (nested) and JSON structure (flat)
+    const materialName = 
+      (purchase['materials'] as Record<string, unknown>)?.['name'] ||
+      (purchase['material_name'] as string) ||
+      'Unknown Material';
+      
+    const vendorName = 
+      (purchase['vendors'] as Record<string, unknown>)?.['name'] || 
+      (purchase['vendor_name'] as string) ||
+      'Unknown Vendor';
+      
+    const siteName = 
+      (purchase['sites'] as Record<string, unknown>)?.['name'] || 
+      (purchase['site_name'] as string) ||
+      'Gudibande';
+      
+    const quantity = (purchase['quantity'] as number) || 0;
+    const unit = (purchase['unit'] as string) || (purchase['unit_of_measure'] as string) || 'Ton';
+    const unitRate = (purchase['rate'] as number) || (purchase['unit_rate'] as number) || 0;
+    const totalAmount = (purchase['total_amount'] as number) || (purchase['value'] as number) || 0;
+    const purchaseDate = (purchase['purchase_date'] as string) || new Date().toISOString().split('T')[0];
+    const invoiceNumber = (purchase['purchase_id'] as string) || (purchase['vendor_invoice_number'] as string) || '';
+    
+    const transformed = {
+      id: purchase['id'] as string || `temp-${Math.random().toString(36).substr(2, 9)}`,
+      materialName,
+      vendor: vendorName,
+      site: siteName,
+      quantity,
+      unit,
+      unitRate,
+      totalAmount,
+      purchaseDate: purchaseDate.split('T')[0], // Ensure date format
+      invoiceNumber,
+      category: 'Construction Material',
+      status: 'completed',
+      createdAt: purchase['created_at'] as string || new Date().toISOString(),
+      updatedAt: purchase['updated_at'] as string || new Date().toISOString(),
+    };
+    
+    console.log('✅ Transformed purchase:', transformed);
+    return transformed;
+  }, []);
+
+  // Fetch real purchase data from database API with retry logic
   useEffect(() => {
-    const fetchPurchases = async () => {
+    let isMounted = true;
+    
+    const fetchPurchases = async (retryCount = 0) => {
       try {
         setIsLoading(true);
-        const response = await fetch(getApiUrl(API_ENDPOINTS.PURCHASES));
+        setError(null);
+        
+        const apiUrl = getApiUrl(API_ENDPOINTS.PURCHASES);
+        console.log('📦 Fetching from API URL:', apiUrl);
+        
+        const response = await fetch(apiUrl, {
+          headers: {
+            'Cache-Control': 'no-cache',
+          },
+        });
+        
         if (response.ok) {
           const result = await response.json();
-          if (result.success) {
+          console.log('📦 Raw API response:', result);
+          
+          if (result.success && result.data) {
+            console.log(`📦 Purchase data loaded from ${result.source || 'unknown'} source`);
+            console.log(`📦 Raw data count: ${result.data.length}`);
+            console.log(`📦 First item sample:`, result.data[0]);
+            
             // Transform database data to match component interface
-            const transformedMaterials: SharedMaterial[] = result.data.map(
-              (purchase: Record<string, unknown>) => ({
-                id: purchase['id'] as string,
-                materialName:
-                  (purchase['materials'] as Record<string, unknown>)?.['name'] ||
-                  'Unknown Material',
-                vendor:
-                  (purchase['vendors'] as Record<string, unknown>)?.['name'] || 'Unknown Vendor',
-                site: (purchase['sites'] as Record<string, unknown>)?.['name'] || 'Gudibande',
-                quantity: (purchase['quantity'] as number) || 0,
-                unit: (purchase['unit_of_measure'] as string) || 'Ton',
-                unitRate: (purchase['rate'] as number) || 0,
-                totalAmount: (purchase['value'] as number) || 0,
-                purchaseDate:
-                  (purchase['purchase_date'] as string) || new Date().toISOString().split('T')[0],
-                invoiceNumber: purchase['purchase_id'] as string,
-                category: 'Construction Material',
-                status: 'completed',
-                createdAt: purchase['created_at'] as string,
-                updatedAt: purchase['updated_at'] as string,
-              }),
-            );
-            setMaterials(transformedMaterials);
+            const transformedMaterials: SharedMaterial[] = result.data.map(transformPurchaseData);
+            console.log(`📦 Transformed data count: ${transformedMaterials.length}`);
+            console.log(`📦 First transformed item:`, transformedMaterials[0]);
+            
+            if (isMounted) {
+              setMaterials(transformedMaterials);
+              console.log('📦 Materials state updated successfully');
+            }
+          } else {
+            console.error('❌ API response not successful:', result);
+            throw new Error(result.message || 'Failed to fetch purchase data');
           }
+        } else {
+          console.error('❌ HTTP error:', response.status, response.statusText);
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
         }
       } catch (error) {
         console.error('Failed to fetch purchases:', error);
-        // Fallback to empty array if API fails
-        setMaterials([]);
+        
+        if (isMounted) {
+          setError(error instanceof Error ? error.message : 'Failed to fetch purchase data');
+          
+          // Retry logic for network errors
+          if (retryCount < 2 && error instanceof Error && error.message.includes('fetch')) {
+            console.log(`Retrying fetch (attempt ${retryCount + 1}/2)...`);
+            setTimeout(() => fetchPurchases(retryCount + 1), 1000 * (retryCount + 1));
+            return;
+          }
+          
+          // Fallback to empty array if all retries fail
+          setMaterials([]);
+        }
       } finally {
-        setIsLoading(false);
+        if (isMounted) {
+          setIsLoading(false);
+        }
       }
     };
 
     fetchPurchases();
-  }, []);
+
+    return () => {
+      isMounted = false;
+    };
+  }, [transformPurchaseData]);
 
   // Use shared state hooks
   const tableState = useTableState({
@@ -107,52 +183,74 @@ export function PurchasePage({ filterBySite }: PurchasePageProps = {}) {
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
   const [statusFilter, setStatusFilter] = useState<string>('all');
 
-  // Calculate summary statistics (filtered by site if applicable)
-  const filteredMaterialsForStats = filterBySite
-    ? materials.filter((m) => m.site === filterBySite)
-    : materials;
-  const totalPurchases = filteredMaterialsForStats.length;
-  const totalValue = filteredMaterialsForStats.reduce(
-    (sum, material) => sum + (material.totalAmount || 0),
-    0,
-  );
-  const averageOrderValue = totalPurchases > 0 ? totalValue / totalPurchases : 0;
-  const totalQuantity = filteredMaterialsForStats.reduce(
-    (sum, material) => sum + (material.quantity || 0),
-    0,
-  );
+  // Memoized filtered materials for stats
+  const filteredMaterialsForStats = useMemo(() => {
+    return filterBySite ? materials.filter((m) => m.site === filterBySite) : materials;
+  }, [materials, filterBySite]);
 
-  const sortedAndFilteredMaterials = materials
-    .filter((material) => {
-      const matchesSite = !filterBySite || material.site === filterBySite;
-      const matchesSearch =
-        material.materialName?.toLowerCase().includes(tableState.searchTerm.toLowerCase()) ||
-        material.vendor?.toLowerCase().includes(tableState.searchTerm.toLowerCase()) ||
-        material.site?.toLowerCase().includes(tableState.searchTerm.toLowerCase());
-      const matchesCategory = categoryFilter === 'all' || material.category === categoryFilter;
-      const matchesStatus =
-        statusFilter === 'all' ||
-        (statusFilter === 'recent' &&
-          new Date(material.purchaseDate || '').getTime() > Date.now() - 7 * 24 * 60 * 60 * 1000) ||
-        (statusFilter === 'pending' && !material.totalAmount);
-      return matchesSite && matchesSearch && matchesCategory && matchesStatus;
-    })
-    .sort((a, b) => {
-      const aValue = a[tableState.sortField as keyof SharedMaterial];
-      const bValue = b[tableState.sortField as keyof SharedMaterial];
+  // Memoized summary statistics
+  const summaryStats = useMemo(() => {
+    const totalPurchases = filteredMaterialsForStats.length;
+    const totalValue = filteredMaterialsForStats.reduce(
+      (sum, material) => sum + (material.totalAmount || 0),
+      0,
+    );
+    const averageOrderValue = totalPurchases > 0 ? totalValue / totalPurchases : 0;
+    const totalQuantity = filteredMaterialsForStats.reduce(
+      (sum, material) => sum + (material.quantity || 0),
+      0,
+    );
+    
+    return { totalPurchases, totalValue, averageOrderValue, totalQuantity };
+  }, [filteredMaterialsForStats]);
 
-      if (typeof aValue === 'string' && typeof bValue === 'string') {
-        return tableState.sortDirection === 'asc'
-          ? aValue.localeCompare(bValue)
-          : bValue.localeCompare(aValue);
-      }
+  // Memoized filtered and sorted materials
+  const sortedAndFilteredMaterials = useMemo(() => {
+    return materials
+      .filter((material) => {
+        const matchesSite = !filterBySite || material.site === filterBySite;
+        const matchesSearch =
+          material.materialName?.toLowerCase().includes(tableState.searchTerm.toLowerCase()) ||
+          material.vendor?.toLowerCase().includes(tableState.searchTerm.toLowerCase()) ||
+          material.site?.toLowerCase().includes(tableState.searchTerm.toLowerCase());
+        const matchesCategory = categoryFilter === 'all' || material.category === categoryFilter;
+        const matchesStatus =
+          statusFilter === 'all' ||
+          (statusFilter === 'recent' &&
+            new Date(material.purchaseDate || '').getTime() > Date.now() - 7 * 24 * 60 * 60 * 1000) ||
+          (statusFilter === 'pending' && !material.totalAmount);
+        return matchesSite && matchesSearch && matchesCategory && matchesStatus;
+      })
+      .sort((a, b) => {
+        const aValue = a[tableState.sortField as keyof SharedMaterial];
+        const bValue = b[tableState.sortField as keyof SharedMaterial];
 
-      if (typeof aValue === 'number' && typeof bValue === 'number') {
-        return tableState.sortDirection === 'asc' ? aValue - bValue : bValue - aValue;
-      }
+        if (typeof aValue === 'string' && typeof bValue === 'string') {
+          return tableState.sortDirection === 'asc'
+            ? aValue.localeCompare(bValue)
+            : bValue.localeCompare(aValue);
+        }
 
-      return 0;
+        if (typeof aValue === 'number' && typeof bValue === 'number') {
+          return tableState.sortDirection === 'asc' ? aValue - bValue : bValue - aValue;
+        }
+
+        return 0;
+      });
+  }, [materials, filterBySite, tableState.searchTerm, tableState.sortField, tableState.sortDirection, categoryFilter, statusFilter]);
+
+  // Destructure summary stats for easier access
+  const { totalPurchases, totalValue, averageOrderValue, totalQuantity } = summaryStats;
+
+  // Debug log for materials state
+  useEffect(() => {
+    console.log('📦 Materials state updated:', {
+      count: materials.length,
+      isLoading,
+      error,
+      firstItem: materials[0]
     });
+  }, [materials, isLoading, error]);
 
   const handleFormSubmit = (materialData: Omit<SharedMaterial, 'id'>) => {
     if (dialog.editingItem) {
@@ -174,6 +272,50 @@ export function PurchasePage({ filterBySite }: PurchasePageProps = {}) {
   const handleDelete = (materialId: string) => {
     deleteMaterial(materialId);
   };
+
+  // Show loading state
+  if (isLoading) {
+    return (
+      <div className="w-full bg-background">
+        <PurchaseTabs />
+        <div className="p-4 md:p-6 space-y-6 max-w-full">
+          <div className="flex items-center justify-center h-64">
+            <div className="text-center space-y-4">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+              <p className="text-muted-foreground">Loading purchase data...</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Show error state
+  if (error) {
+    return (
+      <div className="w-full bg-background">
+        <PurchaseTabs />
+        <div className="p-4 md:p-6 space-y-6 max-w-full">
+          <div className="flex items-center justify-center h-64">
+            <div className="text-center space-y-4">
+              <AlertCircle className="h-12 w-12 text-destructive mx-auto" />
+              <div>
+                <h3 className="text-lg font-semibold text-destructive">Failed to load purchase data</h3>
+                <p className="text-muted-foreground mt-2">{error}</p>
+                <Button 
+                  onClick={() => window.location.reload()} 
+                  className="mt-4"
+                  variant="outline"
+                >
+                  Retry
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="w-full bg-background">
