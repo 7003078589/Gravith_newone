@@ -284,11 +284,11 @@ export function Dashboard({ onNavigate }: DashboardProps) {
     
     // Just log the cache bust info without forcing reloads
     if (typeof window !== 'undefined') {
-      (window as Record<string, unknown>)['dashboardCacheBust'] = cacheBustTimestamp;
+      (window as unknown as Record<string, unknown>)['dashboardCacheBust'] = cacheBustTimestamp;
       console.log('Set window.dashboardCacheBust to:', cacheBustTimestamp);
       
       // Store the onNavigate function in window object for detection
-      (window as Record<string, unknown>)['currentOnNavigate'] = onNavigate;
+      (window as unknown as Record<string, unknown>)['currentOnNavigate'] = onNavigate;
       console.log('Stored onNavigate in window.currentOnNavigate:', onNavigate);
     }
   }, [cacheBustTimestamp, onNavigate]);
