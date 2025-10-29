@@ -1,4 +1,4 @@
-// Vercel serverless function for purchases API
+// Vercel serverless function for work-progress API
 import { createClient } from '@supabase/supabase-js';
 
 const supabaseUrl = process.env.SUPABASE_URL;
@@ -19,20 +19,12 @@ export async function GET() {
   };
 
   try {
-    console.log('📦 API: Getting purchase data from database...');
+    console.log('🏗️ API: Getting work progress data from database...');
 
-    const { data: purchases, error } = await supabaseAdmin
-      .from('purchases')
-      .select(
-        `
-        *,
-        vendors!inner(name),
-        materials!inner(name),
-        sites!inner(name),
-        vehicles(registration_number)
-      `,
-      )
-      .order('purchase_date', { ascending: false });
+    const { data: workProgress, error } = await supabaseAdmin
+      .from('work_progress')
+      .select('*')
+      .order('work_date', { ascending: false });
 
     if (error) {
       console.error('❌ Database error:', error);
@@ -42,16 +34,16 @@ export async function GET() {
       try {
         const fs = require('fs');
         const path = require('path');
-        const purchaseData = JSON.parse(
-          fs.readFileSync(path.join(process.cwd(), 'public/purchase-summary.json'), 'utf8'),
+        const workProgressData = JSON.parse(
+          fs.readFileSync(path.join(process.cwd(), 'public/work-progress-summary.json'), 'utf8'),
         );
         
-        console.log(`✅ Found ${purchaseData.length} purchase records in JSON fallback`);
+        console.log(`✅ Found ${workProgressData.length} work progress records in JSON fallback`);
         
         return new Response(JSON.stringify({
           success: true,
-          data: purchaseData,
-          count: purchaseData.length,
+          data: workProgressData,
+          count: workProgressData.length,
           source: 'json_fallback',
         }), {
           status: 200,
@@ -61,7 +53,7 @@ export async function GET() {
         console.error('❌ Error reading JSON fallback:', jsonError);
         return new Response(JSON.stringify({
           success: false,
-          error: 'Failed to fetch purchase data from both database and JSON',
+          error: 'Failed to fetch work progress data from both database and JSON',
           details: error.message,
         }), {
           status: 500,
@@ -70,25 +62,25 @@ export async function GET() {
       }
     }
 
-    console.log(`✅ Found ${purchases?.length || 0} purchases`);
+    console.log(`✅ Found ${workProgress?.length || 0} work progress records`);
 
     // If database is empty, fall back to JSON data
-    if (!purchases || purchases.length === 0) {
+    if (!workProgress || workProgress.length === 0) {
       console.log('🔄 Database is empty, falling back to JSON data...');
       
       try {
         const fs = require('fs');
         const path = require('path');
-        const purchaseData = JSON.parse(
-          fs.readFileSync(path.join(process.cwd(), 'public/purchase-summary.json'), 'utf8'),
+        const workProgressData = JSON.parse(
+          fs.readFileSync(path.join(process.cwd(), 'public/work-progress-summary.json'), 'utf8'),
         );
         
-        console.log(`✅ Found ${purchaseData.length} purchase records in JSON fallback`);
+        console.log(`✅ Found ${workProgressData.length} work progress records in JSON fallback`);
         
         return new Response(JSON.stringify({
           success: true,
-          data: purchaseData,
-          count: purchaseData.length,
+          data: workProgressData,
+          count: workProgressData.length,
           source: 'json_fallback',
         }), {
           status: 200,
@@ -111,8 +103,8 @@ export async function GET() {
 
     return new Response(JSON.stringify({
       success: true,
-      data: purchases,
-      count: purchases.length,
+      data: workProgress,
+      count: workProgress.length,
       source: 'database',
     }), {
       status: 200,
