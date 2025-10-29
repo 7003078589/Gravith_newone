@@ -265,7 +265,7 @@ interface DashboardProps {
 export function Dashboard({ onNavigate }: DashboardProps) {
   // Force cache bust with unique timestamp and random ID
   const cacheBustTimestamp = new Date().toISOString();
-  const randomId = Math.random().toString(36).substr(2, 9);
+  // const randomId = Math.random().toString(36).substr(2, 9);
   console.log('Dashboard component loaded at:', cacheBustTimestamp);
   console.log('onNavigate function received:', onNavigate);
   console.log('onNavigate type:', typeof onNavigate);
@@ -276,7 +276,7 @@ export function Dashboard({ onNavigate }: DashboardProps) {
     totalExpenses: 0,
     totalExpenseAmount: 0,
   });
-  const [isLoading, setIsLoading] = useState(true);
+  // const [isLoading, setIsLoading] = useState(true);
 
   // Force re-render on mount and store onNavigate function
   React.useEffect(() => {
@@ -298,8 +298,8 @@ export function Dashboard({ onNavigate }: DashboardProps) {
     let isMounted = true;
     
     const fetchRealData = async (retryCount = 0) => {
-      try {
-        setIsLoading(true);
+        try {
+          // setIsLoading(true);
 
         // Fetch summary data
         const summaryResponse = await fetch('http://localhost:3001/api/db/summary', {
@@ -326,11 +326,11 @@ export function Dashboard({ onNavigate }: DashboardProps) {
           setTimeout(() => fetchRealData(retryCount + 1), 1000 * (retryCount + 1));
           return;
         }
-      } finally {
-        if (isMounted) {
-          setIsLoading(false);
+        } finally {
+          if (isMounted) {
+            // setIsLoading(false);
+          }
         }
-      }
     };
 
     fetchRealData();

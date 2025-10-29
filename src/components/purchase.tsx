@@ -53,18 +53,18 @@ export function PurchasePage({ filterBySite }: PurchasePageProps = {}) {
     console.log('🔄 Transforming purchase data:', purchase);
     
     // Handle both database structure (nested) and JSON structure (flat)
-    const materialName = 
-      (purchase['materials'] as Record<string, unknown>)?.['name'] ||
+    const materialName: string = 
+      (purchase['materials'] as Record<string, unknown>)?.['name'] as string ||
       (purchase['material_name'] as string) ||
       'Unknown Material';
       
-    const vendorName = 
-      (purchase['vendors'] as Record<string, unknown>)?.['name'] || 
+    const vendorName: string = 
+      (purchase['vendors'] as Record<string, unknown>)?.['name'] as string || 
       (purchase['vendor_name'] as string) ||
       'Unknown Vendor';
       
-    const siteName = 
-      (purchase['sites'] as Record<string, unknown>)?.['name'] || 
+    const siteName: string = 
+      (purchase['sites'] as Record<string, unknown>)?.['name'] as string || 
       (purchase['site_name'] as string) ||
       'Gudibande';
       
@@ -83,11 +83,15 @@ export function PurchasePage({ filterBySite }: PurchasePageProps = {}) {
       quantity,
       unit,
       unitRate,
+      costPerUnit: unitRate, // Add missing costPerUnit property
       totalAmount,
       purchaseDate: purchaseDate.split('T')[0], // Ensure date format
       invoiceNumber,
       category: 'Construction Material',
       status: 'completed',
+      addedBy: 'System', // Add missing addedBy property
+      consumedQuantity: 0, // Add missing consumedQuantity property
+      remainingQuantity: quantity, // Add missing remainingQuantity property
       createdAt: purchase['created_at'] as string || new Date().toISOString(),
       updatedAt: purchase['updated_at'] as string || new Date().toISOString(),
     };

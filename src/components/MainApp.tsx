@@ -175,7 +175,7 @@ export function MainApp({ initialPage = 'home' }: MainAppProps) {
         window.removeEventListener('navigate', handleCustomNavigate as EventListener);
       };
     }
-  }, [currentPage, cacheBustTimestamp]);
+  }, [currentPage, cacheBustTimestamp, handleNavigate]);
 
   // Show homepage if not logged in and on home page
   if (!isLoggedIn && currentPage === 'home') {
@@ -274,7 +274,6 @@ export function MainApp({ initialPage = 'home' }: MainAppProps) {
                 </div>
               </div>
               <div className="min-h-full w-full max-w-none">
-                {console.log('Rendering page:', currentPage)}
                 {currentPage === 'dashboard' && (
                   <div className="p-6 w-full">
                     <Dashboard
