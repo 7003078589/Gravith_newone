@@ -32,8 +32,8 @@ export async function GET() {
       
       // Fallback to JSON data
       try {
-        const fs = require('fs');
-        const path = require('path');
+        const fs = await import('fs');
+        const path = await import('path');
         const workProgressData = JSON.parse(
           fs.readFileSync(path.join(process.cwd(), 'public/work-progress-summary.json'), 'utf8'),
         );
@@ -69,8 +69,8 @@ export async function GET() {
       console.log('🔄 Database is empty, falling back to JSON data...');
       
       try {
-        const fs = require('fs');
-        const path = require('path');
+        const fs = await import('fs');
+        const path = await import('path');
         const workProgressData = JSON.parse(
           fs.readFileSync(path.join(process.cwd(), 'public/work-progress-summary.json'), 'utf8'),
         );
