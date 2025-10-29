@@ -50,6 +50,7 @@ import { useDialogState } from '@/lib/hooks/useDialogState';
 import { useTableState } from '@/lib/hooks/useTableState';
 import { formatDateShort } from '@/lib/utils';
 import { getApiUrl, API_ENDPOINTS } from '@/lib/api-config';
+import { AlertCircle } from 'lucide-react';
 
 interface WorkProgressEntry {
   id: string;
@@ -108,6 +109,103 @@ export function WorkProgressPage({ filterBySite }: WorkProgressProps) {
   // State for work progress entries
   const [workProgressEntries, setWorkProgressEntries] = useState<WorkProgressEntry[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  // Transform work progress data from API to component interface
+  const transformWorkProgressData = useCallback((workProgress: Record<string, unknown>): WorkProgressEntry => {
+    console.log('🔄 Transforming work progress data:', workProgress);
+    
+    return {
+      id: workProgress['id'] as string || `temp-${Math.random().toString(36).substr(2, 9)}`,
+      siteId: workProgress['site_id'] as string || '',
+      siteName: workProgress['site_name'] as string || 'Unknown Site',
+      workType: workProgress['work_type'] as string || 'General Work',
+      description: workProgress['description'] as string || '',
+      date: (workProgress['work_date'] as string) || (workProgress['date'] as string) || new Date().toISOString().split('T')[0],
+      unit: workProgress['unit'] as string || 'unit',
+      length: workProgress['length'] as number || undefined,
+      breadth: workProgress['breadth'] as number || undefined,
+      thickness: workProgress['thickness'] as number || undefined,
+      totalQuantity: workProgress['total_quantity'] as number || 0,
+      materialsUsed: [], // Will be populated from materials_used if available
+      laborHours: workProgress['labor_hours'] as number || 0,
+      progressPercentage: workProgress['progress_percentage'] as number || 0,
+      notes: workProgress['notes'] as string || '',
+      photos: (workProgress['photos'] as string[]) || [],
+      status: (workProgress['status'] as 'In Progress' | 'Completed' | 'On Hold') || 'In Progress',
+    };
+  }, []);
+
+  // Fetch work progress data from API
+  useEffect(() => {
+    let isMounted = true;
+    
+    const fetchWorkProgress = async (retryCount = 0) => {
+      try {
+        setIsLoading(true);
+        setError(null);
+        
+        const apiUrl = getApiUrl(API_ENDPOINTS.WORK_PROGRESS);
+        console.log('🏗️ Fetching work progress from API URL:', apiUrl);
+        
+        const response = await fetch(apiUrl, {
+          headers: {
+            'Cache-Control': 'no-cache',
+          },
+        });
+        
+        if (response.ok) {
+          const result = await response.json();
+          console.log('🏗️ Raw work progress API response:', result);
+          
+          if (result.success && result.data) {
+            console.log(`🏗️ Work progress data loaded from database`);
+            console.log(`🏗️ Raw data count: ${result.data.length}`);
+            console.log(`🏗️ First item sample:`, result.data[0]);
+            
+            // Transform database data to match component interface
+            const transformedEntries: WorkProgressEntry[] = result.data.map(transformWorkProgressData);
+            console.log(`🏗️ Transformed data count: ${transformedEntries.length}`);
+            console.log(`🏗️ First transformed item:`, transformedEntries[0]);
+            
+            if (isMounted) {
+              setWorkProgressEntries(transformedEntries);
+              console.log('🏗️ Work progress entries state updated successfully');
+            }
+          } else {
+            console.error('❌ Work progress API response not successful:', result);
+            throw new Error(result.message || 'Failed to fetch work progress data');
+          }
+        } else {
+          console.error('❌ Work progress HTTP error:', response.status, response.statusText);
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+      } catch (error) {
+        console.error('Failed to fetch work progress:', error);
+        
+        if (retryCount < 2) {
+          console.log(`🔄 Retrying work progress fetch (attempt ${retryCount + 2}/3)...`);
+          setTimeout(() => fetchWorkProgress(retryCount + 1), 1000 * (retryCount + 1));
+        } else {
+          console.log('🔄 Using mock work progress data as fallback');
+          if (isMounted) {
+            setWorkProgressEntries(mockWorkProgressEntries);
+            setError('Using offline data - API unavailable');
+          }
+        }
+      } finally {
+        if (isMounted) {
+          setIsLoading(false);
+        }
+      }
+    };
+
+    fetchWorkProgress();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [transformWorkProgressData]);
 
   // Mock data for work progress entries (fallback)
   const mockWorkProgressEntries: WorkProgressEntry[] = [
@@ -211,8 +309,13 @@ export function WorkProgressPage({ filterBySite }: WorkProgressProps) {
     const fetchWorkProgress = async () => {
       try {
         setIsLoading(true);
+        setError(null);
         console.log('🏗️ Fetching work progress from:', getApiUrl(API_ENDPOINTS.WORK_PROGRESS));
-        const response = await fetch(getApiUrl(API_ENDPOINTS.WORK_PROGRESS));
+        const response = await fetch(getApiUrl(API_ENDPOINTS.WORK_PROGRESS), {
+          headers: {
+            'Cache-Control': 'no-cache',
+          },
+        });
         console.log('🏗️ Work progress response status:', response.status);
         
         if (response.ok) {
@@ -245,16 +348,19 @@ export function WorkProgressPage({ filterBySite }: WorkProgressProps) {
             setWorkProgressEntries(transformedEntries);
           } else {
             console.error('❌ API returned error:', result.message);
+            setError(result.message || 'Failed to fetch work progress data');
             // Fallback to mock data
             setWorkProgressEntries(mockWorkProgressEntries);
           }
         } else {
           console.error('❌ Failed to fetch work progress:', response.status);
+          setError(`HTTP ${response.status}: ${response.statusText}`);
           // Fallback to mock data
           setWorkProgressEntries(mockWorkProgressEntries);
         }
       } catch (error) {
         console.error('❌ Error fetching work progress:', error);
+        setError('Network error - using offline data');
         // Fallback to mock data
         setWorkProgressEntries(mockWorkProgressEntries);
       } finally {
@@ -509,6 +615,32 @@ export function WorkProgressPage({ filterBySite }: WorkProgressProps) {
             <div className="text-center space-y-4">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
               <p className="text-muted-foreground">Loading work progress data...</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Show error state
+  if (error) {
+    return (
+      <div className="w-full bg-background">
+        <div className="p-4 md:p-6 space-y-6 max-w-full">
+          <div className="flex items-center justify-center h-64">
+            <div className="text-center space-y-4">
+              <AlertCircle className="h-12 w-12 text-destructive mx-auto" />
+              <div>
+                <h3 className="text-lg font-semibold text-destructive">Failed to load work progress data</h3>
+                <p className="text-muted-foreground mt-2">{error}</p>
+                <Button
+                  onClick={() => window.location.reload()}
+                  className="mt-4"
+                  variant="outline"
+                >
+                  Retry
+                </Button>
+              </div>
             </div>
           </div>
         </div>
