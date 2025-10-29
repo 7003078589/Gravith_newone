@@ -22,7 +22,7 @@ import {
   Upload,
 } from 'lucide-react';
 import Image from 'next/image';
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 
 import { DataTable } from '@/components/common/DataTable';
 import { FormDialog } from '@/components/common/FormDialog';
@@ -195,6 +195,12 @@ export function WorkProgressPage({ filterBySite }: WorkProgressProps) {
   const [selectedMaterial, setSelectedMaterial] = useState('');
   const [materialQuantity, setMaterialQuantity] = useState(0);
 
+  // Form validation state
+  const [formErrors, setFormErrors] = useState<Record<string, string>>({});
+
+  // Form ref for submission
+  const formRef = useRef<HTMLFormElement>(null);
+
   // Filter work progress entries
   const filteredEntries = workProgressEntries.filter((entry) => {
     const matchesSite = !filterBySite || entry.siteName === filterBySite;
@@ -221,6 +227,40 @@ export function WorkProgressPage({ filterBySite }: WorkProgressProps) {
 
   const handleFormSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+
+    console.log('📝 Form submission started:', workProgressForm);
+
+    // Clear previous errors
+    setFormErrors({});
+
+    // Validation
+    const errors: Record<string, string> = {};
+
+    if (!workProgressForm.workType) {
+      errors.workType = 'Please select a work type';
+    }
+    if (!workProgressForm.siteId) {
+      errors.siteId = 'Please select a site';
+    }
+    if (!workProgressForm.description.trim()) {
+      errors.description = 'Please enter a description';
+    }
+    if (!workProgressForm.date) {
+      errors.date = 'Please select a date';
+    }
+    if (!workProgressForm.unit) {
+      errors.unit = 'Please select a unit';
+    }
+    if (!workProgressForm.totalQuantity || workProgressForm.totalQuantity <= 0) {
+      errors.totalQuantity = 'Please enter a valid total quantity';
+    }
+
+    // If there are validation errors, show them and stop submission
+    if (Object.keys(errors).length > 0) {
+      setFormErrors(errors);
+      console.log('❌ Form validation failed:', errors);
+      return;
+    }
 
     if (dialog.editingItem) {
       // Update existing entry
@@ -278,6 +318,11 @@ export function WorkProgressPage({ filterBySite }: WorkProgressProps) {
     });
     setSelectedMaterial('');
     setMaterialQuantity(0);
+
+    console.log('✅ Form submitted successfully');
+    alert(
+      dialog.editingItem ? 'Work entry updated successfully!' : 'Work entry added successfully!',
+    );
   };
 
   const handleEdit = (entry: WorkProgressEntry) => {
@@ -551,6 +596,7 @@ export function WorkProgressPage({ filterBySite }: WorkProgressProps) {
                           });
                           setSelectedMaterial('');
                           setMaterialQuantity(0);
+                          setFormErrors({}); // Clear any previous errors
                         }}
                         className="gap-2 transition-all hover:shadow-md whitespace-nowrap"
                       >
@@ -559,9 +605,9 @@ export function WorkProgressPage({ filterBySite }: WorkProgressProps) {
                       </Button>
                     }
                   >
-                    <form onSubmit={handleFormSubmit} className="space-y-6">
-                      <ScrollArea className="max-h-[70vh] pr-4">
-                        <div className="space-y-6">
+                    <div className="flex flex-col max-h-[80vh]">
+                      <ScrollArea className="flex-1 pr-4 max-h-[60vh]">
+                        <form ref={formRef} onSubmit={handleFormSubmit} className="space-y-6">
                           {/* Basic Information */}
                           <div className="space-y-4">
                             <h3 className="text-sm font-semibold text-foreground">
@@ -573,11 +619,18 @@ export function WorkProgressPage({ filterBySite }: WorkProgressProps) {
                                 <Label>Work Type</Label>
                                 <Select
                                   value={workProgressForm.workType}
-                                  onValueChange={(value) =>
-                                    setWorkProgressForm((prev) => ({ ...prev, workType: value }))
-                                  }
+                                  onValueChange={(value) => {
+                                    console.log('🔧 Work type changed:', value);
+                                    setWorkProgressForm((prev) => ({ ...prev, workType: value }));
+                                    // Clear error when user makes a selection
+                                    if (formErrors.workType) {
+                                      setFormErrors((prev) => ({ ...prev, workType: '' }));
+                                    }
+                                  }}
                                 >
-                                  <SelectTrigger>
+                                  <SelectTrigger
+                                    className={formErrors.workType ? 'border-red-500' : ''}
+                                  >
                                     <SelectValue placeholder="Select work type" />
                                   </SelectTrigger>
                                   <SelectContent>
@@ -591,6 +644,9 @@ export function WorkProgressPage({ filterBySite }: WorkProgressProps) {
                                     <SelectItem value="Plastering">Plastering</SelectItem>
                                   </SelectContent>
                                 </Select>
+                                {formErrors.workType && (
+                                  <p className="text-sm text-red-500">{formErrors.workType}</p>
+                                )}
                               </div>
                               <div className="space-y-2">
                                 <Label>Date</Label>
@@ -616,6 +672,7 @@ export function WorkProgressPage({ filterBySite }: WorkProgressProps) {
                               <Select
                                 value={workProgressForm.siteId}
                                 onValueChange={(value) => {
+                                  console.log('🏗️ Site changed:', value);
                                   const site = mockSites.find((s) => s.id === value);
                                   setWorkProgressForm((prev) => ({
                                     ...prev,
@@ -625,9 +682,15 @@ export function WorkProgressPage({ filterBySite }: WorkProgressProps) {
                                   }));
                                   setSelectedMaterial('');
                                   setMaterialQuantity(0);
+                                  // Clear error when user makes a selection
+                                  if (formErrors.siteId) {
+                                    setFormErrors((prev) => ({ ...prev, siteId: '' }));
+                                  }
                                 }}
                               >
-                                <SelectTrigger>
+                                <SelectTrigger
+                                  className={formErrors.siteId ? 'border-red-500' : ''}
+                                >
                                   <SelectValue placeholder="Select site" />
                                 </SelectTrigger>
                                 <SelectContent>
@@ -638,6 +701,9 @@ export function WorkProgressPage({ filterBySite }: WorkProgressProps) {
                                   ))}
                                 </SelectContent>
                               </Select>
+                              {formErrors.siteId && (
+                                <p className="text-sm text-red-500">{formErrors.siteId}</p>
+                              )}
                             </div>
 
                             <div className="space-y-2">
@@ -645,15 +711,23 @@ export function WorkProgressPage({ filterBySite }: WorkProgressProps) {
                               <Textarea
                                 placeholder="Describe the work performed"
                                 value={workProgressForm.description}
-                                onChange={(e) =>
+                                onChange={(e) => {
                                   setWorkProgressForm((prev) => ({
                                     ...prev,
                                     description: e.target.value,
-                                  }))
-                                }
+                                  }));
+                                  // Clear error when user types
+                                  if (formErrors.description) {
+                                    setFormErrors((prev) => ({ ...prev, description: '' }));
+                                  }
+                                }}
+                                className={formErrors.description ? 'border-red-500' : ''}
                                 required
                                 rows={3}
                               />
+                              {formErrors.description && (
+                                <p className="text-sm text-red-500">{formErrors.description}</p>
+                              )}
                             </div>
                           </div>
 
@@ -668,11 +742,17 @@ export function WorkProgressPage({ filterBySite }: WorkProgressProps) {
                                 <Label>Unit</Label>
                                 <Select
                                   value={workProgressForm.unit}
-                                  onValueChange={(value) =>
-                                    setWorkProgressForm((prev) => ({ ...prev, unit: value }))
-                                  }
+                                  onValueChange={(value) => {
+                                    setWorkProgressForm((prev) => ({ ...prev, unit: value }));
+                                    // Clear error when user makes a selection
+                                    if (formErrors.unit) {
+                                      setFormErrors((prev) => ({ ...prev, unit: '' }));
+                                    }
+                                  }}
                                 >
-                                  <SelectTrigger>
+                                  <SelectTrigger
+                                    className={formErrors.unit ? 'border-red-500' : ''}
+                                  >
                                     <SelectValue placeholder="Select unit" />
                                   </SelectTrigger>
                                   <SelectContent>
@@ -684,6 +764,9 @@ export function WorkProgressPage({ filterBySite }: WorkProgressProps) {
                                     <SelectItem value="cft">Cubic Feet (cft)</SelectItem>
                                   </SelectContent>
                                 </Select>
+                                {formErrors.unit && (
+                                  <p className="text-sm text-red-500">{formErrors.unit}</p>
+                                )}
                               </div>
                               <div className="space-y-2">
                                 <Label>Total Quantity</Label>
@@ -692,14 +775,22 @@ export function WorkProgressPage({ filterBySite }: WorkProgressProps) {
                                   step="0.01"
                                   placeholder="0.00"
                                   value={workProgressForm.totalQuantity || ''}
-                                  onChange={(e) =>
+                                  onChange={(e) => {
                                     setWorkProgressForm((prev) => ({
                                       ...prev,
                                       totalQuantity: parseFloat(e.target.value) || 0,
-                                    }))
-                                  }
+                                    }));
+                                    // Clear error when user types
+                                    if (formErrors.totalQuantity) {
+                                      setFormErrors((prev) => ({ ...prev, totalQuantity: '' }));
+                                    }
+                                  }}
+                                  className={formErrors.totalQuantity ? 'border-red-500' : ''}
                                   required
                                 />
+                                {formErrors.totalQuantity && (
+                                  <p className="text-sm text-red-500">{formErrors.totalQuantity}</p>
+                                )}
                               </div>
                             </div>
 
@@ -1010,10 +1101,10 @@ export function WorkProgressPage({ filterBySite }: WorkProgressProps) {
                               rows={3}
                             />
                           </div>
-                        </div>
+                        </form>
                       </ScrollArea>
 
-                      <div className="flex justify-end gap-2 pt-4 border-t">
+                      <div className="flex justify-end gap-2 pt-4 border-t bg-background mt-4">
                         <Button
                           type="button"
                           variant="outline"
@@ -1021,11 +1112,19 @@ export function WorkProgressPage({ filterBySite }: WorkProgressProps) {
                         >
                           Cancel
                         </Button>
-                        <Button type="submit">
+                        <Button
+                          type="button"
+                          onClick={() => {
+                            if (formRef.current) {
+                              formRef.current.requestSubmit();
+                            }
+                          }}
+                          className="min-w-[100px]"
+                        >
                           {dialog.editingItem ? 'Update Entry' : 'Add Entry'}
                         </Button>
                       </div>
-                    </form>
+                    </div>
                   </FormDialog>
                 </div>
               </div>
