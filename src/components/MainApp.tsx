@@ -160,7 +160,7 @@ export function MainApp({ initialPage = 'home' }: MainAppProps) {
     
     // Just log the cache bust info without forcing reloads
     if (typeof window !== 'undefined') {
-      (window as any).mainAppCacheBust = cacheBustTimestamp;
+      (window as Record<string, unknown>)['mainAppCacheBust'] = cacheBustTimestamp;
       console.log('🔥🔥🔥 Set window.mainAppCacheBust to:', cacheBustTimestamp);
       
       // Listen for custom navigation events from Dashboard
