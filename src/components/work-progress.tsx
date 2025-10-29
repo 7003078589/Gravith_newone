@@ -50,7 +50,6 @@ import { useDialogState } from '@/lib/hooks/useDialogState';
 import { useTableState } from '@/lib/hooks/useTableState';
 import { formatDateShort } from '@/lib/utils';
 import { getApiUrl, API_ENDPOINTS } from '@/lib/api-config';
-import { AlertCircle } from 'lucide-react';
 
 interface WorkProgressEntry {
   id: string;
