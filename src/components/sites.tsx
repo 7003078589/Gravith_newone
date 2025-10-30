@@ -1073,7 +1073,7 @@ export function SitesPage({ selectedSite: propSelectedSite, onSiteSelect }: Site
                           </TabsContent>
 
                           <TabsContent value="purchase" className="mt-0">
-                            <PurchasePage filterBySite={currentSite?.id} />
+                            <PurchasePage filterBySite={currentSite?.name} />
                           </TabsContent>
 
                           <TabsContent value="work-progress" className="mt-0">

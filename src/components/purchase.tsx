@@ -46,79 +46,32 @@ interface PurchasePageProps {
 type SiteScopedMaterial = SharedMaterial & { siteId?: string; status?: 'completed' | 'pending' | 'recent' };
 
 export function PurchasePage({ filterBySite }: PurchasePageProps = {}) {
-  const { addMaterial, updateMaterial, deleteMaterial } = useMaterials();
+  const { addMaterial, updateMaterial, deleteMaterial, materials: contextMaterials } = useMaterials();
   const [materials, setMaterials] = useState<SiteScopedMaterial[]>([]);
 
-  // Memoized data transformation function
-  const transformPurchaseData = useCallback((purchase: Record<string, unknown>): SiteScopedMaterial => {
-    
-    // Handle both database structure (nested) and JSON structure (flat)
-    const materialName: string = 
-      (purchase['materials'] as Record<string, unknown>)?.['name'] as string ||
-      (purchase['material_name'] as string) ||
-      'Unknown Material';
-      
-    const vendorName: string = 
-      (purchase['vendors'] as Record<string, unknown>)?.['name'] as string || 
-      (purchase['vendor_name'] as string) ||
-      'Unknown Vendor';
-      
-    const siteId: string = (purchase['site_id'] as string) || '';
-    const siteName: string = 
-      (purchase['sites'] as Record<string, unknown>)?.['name'] as string || 
-      (purchase['site_name'] as string) ||
-      '';
-      
-    const quantity = (purchase['quantity'] as number) || 0;
-    const unit = (purchase['unit'] as string) || (purchase['unit_of_measure'] as string) || 'Ton';
-    const unitRate = (purchase['rate'] as number) || (purchase['unit_rate'] as number) || 0;
-    const totalAmount = (purchase['total_amount'] as number) || (purchase['value'] as number) || 0;
-    const purchaseDate = (purchase['purchase_date'] as string) || new Date().toISOString().split('T')[0];
-    const invoiceNumber = (purchase['purchase_id'] as string) || (purchase['vendor_invoice_number'] as string) || '';
-    
-    const transformed: SiteScopedMaterial = {
-      id: purchase['id'] as string || `temp-${Math.random().toString(36).substr(2, 9)}`,
-      materialName,
-      vendor: vendorName,
-      site: siteName || (siteId ? `Site ${siteId}` : ''),
-      // attach siteId for filtering within Sites page
-      quantity,
-      unit,
-      unitRate,
-      costPerUnit: unitRate, // Add missing costPerUnit property
-      totalAmount,
-      purchaseDate: purchaseDate.split('T')[0], // Ensure date format
-      invoiceNumber,
-      category: 'Construction Material',
-      status: 'completed',
-      addedBy: 'System', // Add missing addedBy property
-      consumedQuantity: 0, // Add missing consumedQuantity property
-      remainingQuantity: quantity, // Add missing remainingQuantity property
-    };
-    if (siteId) transformed.siteId = siteId;
-    
-    return transformed;
-  }, []);
-
-  // Load mock purchases from public JSON and transform; no DB calls
+  // Use mock materials from context only (no fetching / DB)
   useEffect(() => {
-    let isMounted = true;
-    const load = async () => {
-      try {
-        const resp = await fetch('/purchase-summary.json', { headers: { 'Cache-Control': 'no-cache' } });
-        if (!resp.ok) throw new Error(String(resp.status));
-        const json = await resp.json();
-        const transformed: SiteScopedMaterial[] = json.map(transformPurchaseData);
-        if (isMounted) setMaterials(transformed);
-      } catch {
-        if (isMounted) setMaterials([]);
-      }
-    };
-    void load();
-    return () => {
-      isMounted = false;
-    };
-  }, [transformPurchaseData]);
+    setMaterials(contextMaterials as SiteScopedMaterial[]);
+  }, [contextMaterials]);
+
+  // Handle mismatched mock site names between Sites page and Materials context
+  const SITE_NAME_ALIASES: Record<string, string[]> = useMemo(() => ({
+    // Map Sites page names to the corresponding names used in mock purchases
+    // Residential page aggregates all three demo purchases so the tab matches the Purchase page total
+    'Residential Complex A': [
+      'Rajiv Nagar Residential Complex',
+      'Green Valley Commercial Center',
+      'Sunshine Apartments Phase II',
+    ],
+    'Commercial Plaza B': ['Green Valley Commercial Center'],
+    'Highway Bridge Project': ['Sunshine Apartments Phase II'],
+  }), []);
+
+  const equivalentSiteNames = (siteName: string | undefined): string[] => {
+    if (!siteName) return [];
+    const aliases = SITE_NAME_ALIASES[siteName] || [];
+    return [siteName, ...aliases];
+  };
 
   // Use shared state hooks
   const tableState = useTableState({
@@ -135,7 +88,12 @@ export function PurchasePage({ filterBySite }: PurchasePageProps = {}) {
 
   // Memoized filtered materials for stats
   const filteredMaterialsForStats = useMemo(() => {
-    return filterBySite ? materials.filter((m) => m.siteId === filterBySite || m.site === filterBySite) : materials;
+    if (!filterBySite) return materials;
+    const candidates = equivalentSiteNames(filterBySite).map((n) => n.toLowerCase());
+    return materials.filter((m) => {
+      const siteLower = (m.site || '').toLowerCase();
+      return candidates.includes(siteLower) || m.siteId === filterBySite;
+    });
   }, [materials, filterBySite]);
 
   // Memoized summary statistics
@@ -158,7 +116,13 @@ export function PurchasePage({ filterBySite }: PurchasePageProps = {}) {
   const sortedAndFilteredMaterials = useMemo(() => {
     return materials
       .filter((material) => {
-        const matchesSite = !filterBySite || material.siteId === filterBySite || material.site === filterBySite;
+        const matchesSite = !filterBySite
+          ? true
+          : (() => {
+              const candidates = equivalentSiteNames(filterBySite).map((n) => n.toLowerCase());
+              const siteLower = (material.site || '').toLowerCase();
+              return candidates.includes(siteLower) || material.siteId === filterBySite;
+            })();
         const matchesSearch =
           material.materialName?.toLowerCase().includes(tableState.searchTerm.toLowerCase()) ||
           material.vendor?.toLowerCase().includes(tableState.searchTerm.toLowerCase()) ||
