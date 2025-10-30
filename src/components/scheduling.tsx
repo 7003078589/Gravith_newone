@@ -9,6 +9,7 @@ import {
   Activity,
   Zap,
   Building2,
+  Edit,
 } from 'lucide-react';
 import React, { useState } from 'react';
 
@@ -330,7 +331,15 @@ export function SchedulingPage({ filterBySite }: SchedulingPageProps = {}) {
       milestones: activityForm.milestones,
     };
 
-    setActivities((prev) => [...prev, newActivity]);
+    if (activityDialog.editingItem) {
+      // Update existing
+      setActivities((prev) =>
+        prev.map((a) => (a.id === activityDialog.editingItem!.id ? { ...newActivity, id: a.id } : a)),
+      );
+    } else {
+      // Create new
+      setActivities((prev) => [...prev, newActivity]);
+    }
     setActivityForm({
       siteId: '',
       name: '',
@@ -345,6 +354,23 @@ export function SchedulingPage({ filterBySite }: SchedulingPageProps = {}) {
       milestones: false,
     });
     activityDialog.closeDialog();
+  };
+
+  const openEditActivity = (activity: ProjectActivity) => {
+    setActivityForm({
+      siteId: activity.siteId,
+      name: activity.name,
+      description: activity.description,
+      startDate: activity.startDate,
+      duration: String(activity.duration),
+      assignedTeam: activity.assignedTeam,
+      priority: activity.priority,
+      category: activity.category,
+      dependencies: activity.dependencies,
+      resources: activity.resources.join(', '),
+      milestones: activity.milestones,
+    });
+    activityDialog.openDialog(activity);
   };
 
   const handleMilestoneSubmit = (e: React.FormEvent) => {
@@ -506,12 +532,12 @@ export function SchedulingPage({ filterBySite }: SchedulingPageProps = {}) {
           </FormDialog>
 
           <FormDialog
-            title="Add Project Activity"
+            title={activityDialog.editingItem ? 'Edit Project Activity' : 'Add Project Activity'}
             description="Create a new activity in the project schedule"
             isOpen={activityDialog.isDialogOpen}
             onOpenChange={(open) => {
               if (open) {
-                activityDialog.openDialog();
+                activityDialog.openDialog(activityDialog.editingItem);
               } else {
                 activityDialog.closeDialog();
               }
@@ -847,6 +873,7 @@ export function SchedulingPage({ filterBySite }: SchedulingPageProps = {}) {
                 { key: 'team', label: 'Team', sortable: true },
                 { key: 'progress', label: 'Progress', sortable: true },
                 { key: 'status', label: 'Status', sortable: true },
+                { key: 'actions', label: 'Actions', sortable: false },
               ]}
               data={filteredActivities.map((activity) => ({
                 activity: (
@@ -881,6 +908,28 @@ export function SchedulingPage({ filterBySite }: SchedulingPageProps = {}) {
                 ),
                 status: (
                   <Badge className={getStatusColor(activity.status)}>{activity.status}</Badge>
+                ),
+                actions: (
+                  <div className="flex items-center gap-1">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => openEditActivity(activity)}
+                      className="h-8 w-8 p-0"
+                      aria-label="Edit activity"
+                    >
+                      <Edit className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setActivities((prev) => prev.filter((a) => a.id !== activity.id))}
+                      className="h-8 w-8 p-0 text-destructive"
+                      aria-label="Delete activity"
+                    >
+                      ✕
+                    </Button>
+                  </div>
                 ),
               }))}
               onSort={tableState.setSortField}

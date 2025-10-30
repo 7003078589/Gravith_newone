@@ -28,6 +28,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Edit, Trash2 } from 'lucide-react';
 import { Textarea } from '@/components/ui/textarea';
 import { useDialogState } from '@/lib/hooks/useDialogState';
 import { formatDateShort } from '@/lib/utils';
@@ -306,8 +307,8 @@ export function VehiclesPage({
     }
   }, [propSelectedVehicle]);
 
-  const refuelingDialog = useDialogState();
-  const usageDialog = useDialogState();
+  const refuelingDialog = useDialogState<VehicleRefueling>();
+  const usageDialog = useDialogState<VehicleUsage>();
 
   // Form states
   const [refuelingForm, setRefuelingForm] = useState({
@@ -352,7 +353,7 @@ export function VehiclesPage({
     const vehicle = vehicles.find((v) => v.id === refuelingForm.vehicleId);
 
     const newRefueling: VehicleRefueling = {
-      id: (refuelingRecords.length + 1).toString(),
+      id: (refuelingDialog.editingItem?.id ?? (refuelingRecords.length + 1).toString()),
       vehicleId: refuelingForm.vehicleId,
       vehicleNumber: vehicle?.vehicleNumber || '',
       date: refuelingForm.date,
@@ -368,7 +369,12 @@ export function VehiclesPage({
       recordedBy: 'Current User',
     };
 
-    setRefuelingRecords((prev) => [...prev, newRefueling]);
+    setRefuelingRecords((prev) => {
+      if (refuelingDialog.editingItem) {
+        return prev.map((r) => (r.id === refuelingDialog.editingItem!.id ? newRefueling : r));
+      }
+      return [...prev, newRefueling];
+    });
 
     // Update vehicle fuel level and mileage
     setVehicles((prev) =>
@@ -402,13 +408,29 @@ export function VehiclesPage({
     refuelingDialog.closeDialog();
   };
 
+  const openEditRefueling = (record: VehicleRefueling) => {
+    setRefuelingForm({
+      vehicleId: record.vehicleId,
+      date: record.date,
+      fuelType: record.fuelType,
+      quantity: String(record.quantity),
+      cost: String(record.cost),
+      odometerReading: String(record.odometerReading),
+      location: record.location,
+      vendor: record.vendor,
+      invoiceNumber: record.invoiceNumber,
+      notes: record.notes || '',
+    });
+    refuelingDialog.openDialog(record);
+  };
+
   const handleUsageSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const vehicle = vehicles.find((v) => v.id === usageForm.vehicleId);
     const totalDistance = Number(usageForm.endOdometer) - Number(usageForm.startOdometer);
 
     const newUsage: VehicleUsage = {
-      id: (usageRecords.length + 1).toString(),
+      id: (usageDialog.editingItem?.id ?? (usageRecords.length + 1).toString()),
       vehicleId: usageForm.vehicleId,
       vehicleNumber: vehicle?.vehicleNumber || '',
       date: usageForm.date,
@@ -431,7 +453,12 @@ export function VehiclesPage({
       recordedBy: 'Current User',
     };
 
-    setUsageRecords((prev) => [...prev, newUsage]);
+    setUsageRecords((prev) => {
+      if (usageDialog.editingItem) {
+        return prev.map((r) => (r.id === usageDialog.editingItem!.id ? newUsage : r));
+      }
+      return [...prev, newUsage];
+    });
 
     // Update vehicle mileage and fuel level
     setVehicles((prev) =>
@@ -461,6 +488,23 @@ export function VehiclesPage({
       notes: '',
     });
     usageDialog.closeDialog();
+  };
+
+  const openEditUsage = (record: VehicleUsage) => {
+    setUsageForm({
+      vehicleId: record.vehicleId,
+      date: record.date,
+      startTime: record.startTime,
+      endTime: record.endTime,
+      startOdometer: String(record.startOdometer),
+      endOdometer: String(record.endOdometer),
+      workDescription: record.workDescription,
+      workCategory: record.workCategory,
+      siteId: record.siteId,
+      fuelConsumed: String(record.fuelConsumed),
+      notes: record.notes || '',
+    });
+    usageDialog.openDialog(record);
   };
 
   const getStatusColor = (status: Vehicle['status']) => {
@@ -666,6 +710,7 @@ export function VehiclesPage({
                                 <th className="px-3 py-2 text-left">Vendor</th>
                                 <th className="px-3 py-2 text-left">Invoice</th>
                                 <th className="px-3 py-2 text-left">Notes</th>
+                                <th className="px-3 py-2 text-left">Actions</th>
                               </tr>
                             </thead>
                             <tbody>
@@ -683,7 +728,29 @@ export function VehiclesPage({
                                   <td className="px-3 py-2">{record.vendor}</td>
                                   <td className="px-3 py-2">{record.invoiceNumber}</td>
                                   <td className="px-3 py-2">{record.notes || '-'}</td>
-                                </tr>
+                                <td className="px-3 py-2">
+                                  <div className="flex items-center gap-1">
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      className="h-8 w-8 p-0"
+                                      onClick={() => openEditRefueling(record)}
+                                      aria-label="Edit refueling"
+                                    >
+                                      <Edit className="h-4 w-4" />
+                                    </Button>
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      className="h-8 w-8 p-0 text-destructive"
+                                      onClick={() => setRefuelingRecords((prev) => prev.filter((r) => r.id !== record.id))}
+                                      aria-label="Delete refueling"
+                                    >
+                                      <Trash2 className="h-4 w-4" />
+                                    </Button>
+                                  </div>
+                                </td>
+                              </tr>
                               ))}
                             </tbody>
                           </table>
@@ -797,7 +864,7 @@ export function VehiclesPage({
                         </Button>
                       </div>
                       <div className="overflow-x-auto">
-                        <table className="min-w-full text-sm">
+                          <table className="min-w-full text-sm">
                           <thead>
                             <tr className="border-b bg-muted/50">
                               <th className="px-3 py-2 text-left">Date</th>
@@ -808,6 +875,7 @@ export function VehiclesPage({
                               <th className="px-3 py-2 text-left">End Reading</th>
                               <th className="px-3 py-2 text-left">Distance</th>
                               <th className="px-3 py-2 text-left">Status</th>
+                                <th className="px-3 py-2 text-left">Actions</th>
                             </tr>
                           </thead>
                           <tbody>
@@ -828,6 +896,28 @@ export function VehiclesPage({
                                   >
                                     {record.status}
                                   </Badge>
+                                </td>
+                                <td className="px-3 py-2">
+                                  <div className="flex items-center gap-1">
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      className="h-8 w-8 p-0"
+                                      onClick={() => openEditUsage(record)}
+                                      aria-label="Edit usage"
+                                    >
+                                      <Edit className="h-4 w-4" />
+                                    </Button>
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      className="h-8 w-8 p-0 text-destructive"
+                                      onClick={() => setUsageRecords((prev) => prev.filter((r) => r.id !== record.id))}
+                                      aria-label="Delete usage"
+                                    >
+                                      <Trash2 className="h-4 w-4" />
+                                    </Button>
+                                  </div>
                                 </td>
                               </tr>
                             ))}
@@ -864,10 +954,14 @@ export function VehiclesPage({
 
       {/* Refueling Dialog */}
       <FormDialog
-        title="Add Refueling Record"
+        title={refuelingDialog.editingItem ? 'Edit Refueling Record' : 'Add Refueling Record'}
         description="Record vehicle refueling details"
         isOpen={refuelingDialog.isDialogOpen}
-        onOpenChange={refuelingDialog.toggleDialog}
+        onOpenChange={(open) => {
+          if (!open) {
+            refuelingDialog.closeDialog();
+          }
+        }}
         maxWidth="max-w-2xl"
       >
         <form onSubmit={handleRefuelingSubmit} className="space-y-4">
@@ -1008,17 +1102,21 @@ export function VehiclesPage({
             <Button type="button" variant="outline" onClick={() => refuelingDialog.closeDialog()}>
               Cancel
             </Button>
-            <Button type="submit">Add Refueling</Button>
+            <Button type="submit">{refuelingDialog.editingItem ? 'Update' : 'Add'} Refueling</Button>
           </div>
         </form>
       </FormDialog>
 
       {/* Usage Dialog */}
       <FormDialog
-        title="Add Usage Record"
+        title={usageDialog.editingItem ? 'Edit Usage Record' : 'Add Usage Record'}
         description="Record vehicle usage details"
         isOpen={usageDialog.isDialogOpen}
-        onOpenChange={usageDialog.toggleDialog}
+        onOpenChange={(open) => {
+          if (!open) {
+            usageDialog.closeDialog();
+          }
+        }}
         maxWidth="max-w-2xl"
       >
         <form onSubmit={handleUsageSubmit} className="space-y-4">
@@ -1175,7 +1273,7 @@ export function VehiclesPage({
             <Button type="button" variant="outline" onClick={() => usageDialog.closeDialog()}>
               Cancel
             </Button>
-            <Button type="submit">Add Usage</Button>
+            <Button type="submit">{usageDialog.editingItem ? 'Update' : 'Add'} Usage</Button>
           </div>
         </form>
       </FormDialog>
