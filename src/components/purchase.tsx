@@ -42,8 +42,8 @@ interface PurchasePageProps {
   filterBySite?: string;
 }
 
-// Extend shared material locally to carry optional siteId for site-scoped filtering
-type SiteScopedMaterial = SharedMaterial & { siteId?: string };
+// Extend shared material locally to carry optional fields used in this view
+type SiteScopedMaterial = SharedMaterial & { siteId?: string; status?: 'completed' | 'pending' | 'recent' };
 
 export function PurchasePage({ filterBySite }: PurchasePageProps = {}) {
   const { addMaterial, updateMaterial, deleteMaterial } = useMaterials();
