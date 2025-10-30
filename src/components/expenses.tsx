@@ -466,7 +466,7 @@ export function ExpensesPage({ filterBySite }: ExpensesPageProps = {}) {
             isLoading={isLoading}
             lockedSite={filterBySite}
             defaultValues={dialogState.editingItem ? {
-              category: dialogState.editingItem.category as any,
+              category: dialogState.editingItem.category as ExpenseFormData['category'],
               subcategory: dialogState.editingItem.subcategory || '',
               description: dialogState.editingItem.description,
               amount: dialogState.editingItem.amount,
