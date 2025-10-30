@@ -267,7 +267,7 @@ export function ExpenseForm({
             Cancel
           </Button>
           <Button type="submit" disabled={isLoading}>
-            {isLoading ? 'Adding...' : 'Add Expense'}
+            {defaultValues ? (isLoading ? 'Saving...' : 'Save Changes') : (isLoading ? 'Adding...' : 'Add Expense')}
           </Button>
         </div>
       </form>

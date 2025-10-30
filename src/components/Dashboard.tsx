@@ -370,6 +370,32 @@ export function Dashboard({ onNavigate }: DashboardProps) {
     }
   };
 
+  const navigateTo = (path: string) => {
+    if (onNavigate) {
+      onNavigate(path);
+    } else if (typeof window !== 'undefined') {
+      window.location.href = path.startsWith('/') ? path : `/${path}`;
+    }
+  };
+
+  const handleAlertAction = (title: string, action: string) => {
+    const lowerTitle = title.toLowerCase();
+    const lowerAction = action.toLowerCase();
+    if (lowerTitle.includes('low stock') || lowerAction.includes('order')) {
+      navigateTo('materials');
+      return;
+    }
+    if (lowerTitle.includes('maintenance') || lowerAction.includes('schedule')) {
+      navigateTo('vehicles');
+      return;
+    }
+    if (lowerTitle.includes('budget') || lowerAction.includes('view')) {
+      navigateTo('reports?view=financial');
+      return;
+    }
+    navigateTo('dashboard');
+  };
+
   // Overview tab content
   const OverviewContent = () => (
     <div className="space-y-6">
@@ -645,7 +671,12 @@ export function Dashboard({ onNavigate }: DashboardProps) {
                         <p className="font-medium">{alert.title}</p>
                         <p className="text-sm">{alert.description}</p>
                       </div>
-                      <Button size="sm" variant="outline" className="w-full">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="w-full"
+                        onClick={() => handleAlertAction(alert.title, alert.action)}
+                      >
                         {alert.action}
                       </Button>
                     </div>

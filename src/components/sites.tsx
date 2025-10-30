@@ -839,13 +839,14 @@ export function SitesPage({ selectedSite: propSelectedSite, onSiteSelect }: Site
                               size="sm"
                               onClick={() => handleEditSite(currentSite)}
                               className="gap-2 transition-all hover:shadow-md"
+                              aria-label="Edit site"
                             >
-                              <Settings className="h-4 w-4" />
-                              <span className="hidden sm:inline">Settings</span>
+                              <Edit className="h-4 w-4" />
+                              <span className="hidden sm:inline">Edit</span>
                             </Button>
                           </TooltipTrigger>
                           <TooltipContent>
-                            <p>Site settings and configuration</p>
+                            <p>Edit site details</p>
                           </TooltipContent>
                         </Tooltip>
                       </TooltipProvider>

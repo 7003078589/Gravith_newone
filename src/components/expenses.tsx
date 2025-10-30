@@ -34,7 +34,7 @@ import { useTableState } from '@/lib/hooks/useTableState';
 import type { Expense } from '@/types';
 import type { ExpenseFormData } from '@/components/forms/ExpenseForm';
 
-import { expenseColumns } from './expenses-columns';
+import { createExpenseColumns } from './expenses-columns';
 import { ExpenseForm } from '@/components/forms/ExpenseForm';
 
 // Mock data - in real app this would come from API
@@ -174,7 +174,8 @@ export function ExpensesPage({ filterBySite }: ExpensesPageProps = {}) {
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
-  const dialogState = useDialogState();
+  const dialogState = useDialogState<Expense | null>();
+  const viewDialog = useDialogState<Expense | null>();
 
   // Use table state hook for filtering and pagination
   const tableState = useTableState({
@@ -198,7 +199,7 @@ export function ExpensesPage({ filterBySite }: ExpensesPageProps = {}) {
       await new Promise((resolve) => setTimeout(resolve, 1000));
 
       const newExpense: Expense = {
-        id: (expenses.length + 1).toString(),
+        id: (dialogState.editingItem?.id ?? (expenses.length + 1).toString()),
         ...formData,
         date: formData.date.toISOString().split('T')[0],
         status: 'pending' as const,
@@ -208,13 +209,28 @@ export function ExpensesPage({ filterBySite }: ExpensesPageProps = {}) {
         updatedAt: new Date().toISOString(),
       };
 
-      setExpenses((prev) => [...prev, newExpense]);
+      setExpenses((prev) => {
+        if (dialogState.editingItem) {
+          return prev.map((e) => (e.id === dialogState.editingItem!.id ? newExpense : e));
+        }
+        return [...prev, newExpense];
+      });
       dialogState.closeDialog();
     } catch (error) {
       console.error('Failed to add expense:', error);
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleView = (expense: Expense) => {
+    viewDialog.openDialog(expense);
+  };
+  const handleEdit = (expense: Expense) => {
+    dialogState.openDialog(expense);
+  };
+  const handleDelete = (expense: Expense) => {
+    setExpenses((prev) => prev.filter((e) => e.id !== expense.id));
   };
 
   // Calculate analytics (filtered by site if applicable)
@@ -421,7 +437,7 @@ export function ExpensesPage({ filterBySite }: ExpensesPageProps = {}) {
             <Card className="w-full overflow-hidden">
               <CardContent className="p-0">
                 <DataTable
-                  columns={expenseColumns as unknown as DataTableColumn<Record<string, unknown>>[]}
+                  columns={createExpenseColumns({ onView: handleView, onEdit: handleEdit, onDelete: handleDelete }) as unknown as DataTableColumn<Record<string, unknown>>[]}
                   data={filteredExpenses as unknown as Record<string, unknown>[]}
                   onSort={tableState.setSortField}
                   onPageChange={tableState.setCurrentPage}
@@ -438,7 +454,7 @@ export function ExpensesPage({ filterBySite }: ExpensesPageProps = {}) {
 
         {/* Add Expense Dialog */}
         <FormDialog
-          title="Add New Expense"
+          title={dialogState.editingItem ? 'Edit Expense' : 'Add New Expense'}
           description="Create a new expense entry for your project"
           isOpen={dialogState.isDialogOpen}
           onOpenChange={(open) => (open ? dialogState.openDialog() : dialogState.closeDialog())}
@@ -449,7 +465,49 @@ export function ExpensesPage({ filterBySite }: ExpensesPageProps = {}) {
             onCancel={dialogState.closeDialog}
             isLoading={isLoading}
             lockedSite={filterBySite}
+            defaultValues={dialogState.editingItem ? {
+              category: dialogState.editingItem.category as any,
+              subcategory: dialogState.editingItem.subcategory || '',
+              description: dialogState.editingItem.description,
+              amount: dialogState.editingItem.amount,
+              date: new Date(dialogState.editingItem.date),
+              vendor: dialogState.editingItem.vendor || '',
+              site: dialogState.editingItem.siteName || '',
+              receipt: dialogState.editingItem.receipt || '',
+              approvedBy: dialogState.editingItem.approvedBy || '',
+            } : undefined}
           />
+        </FormDialog>
+
+        {/* View Expense Dialog */}
+        <FormDialog
+          title="Expense Details"
+          description="View expense information"
+          isOpen={viewDialog.isDialogOpen}
+          onOpenChange={(open) => (open ? viewDialog.openDialog(viewDialog.editingItem) : viewDialog.closeDialog())}
+          maxWidth="max-w-xl"
+        >
+          {viewDialog.editingItem && (
+            <div className="space-y-3 text-sm">
+              <div className="grid grid-cols-2 gap-3">
+                <div><span className="text-muted-foreground">Category:</span> {viewDialog.editingItem.category}</div>
+                <div><span className="text-muted-foreground">Subcategory:</span> {viewDialog.editingItem.subcategory}</div>
+                <div><span className="text-muted-foreground">Amount:</span> ₹{viewDialog.editingItem.amount.toLocaleString()}</div>
+                <div><span className="text-muted-foreground">Date:</span> {viewDialog.editingItem.date}</div>
+                <div><span className="text-muted-foreground">Vendor:</span> {viewDialog.editingItem.vendor}</div>
+                <div><span className="text-muted-foreground">Site:</span> {viewDialog.editingItem.siteName}</div>
+                <div><span className="text-muted-foreground">Receipt:</span> {viewDialog.editingItem.receipt}</div>
+                <div><span className="text-muted-foreground">Status:</span> {viewDialog.editingItem.status}</div>
+              </div>
+              <div>
+                <div className="text-muted-foreground">Description</div>
+                <div className="whitespace-pre-wrap mt-1">{viewDialog.editingItem.description}</div>
+              </div>
+              <div className="flex justify-end">
+                <Button variant="outline" onClick={viewDialog.closeDialog}>Close</Button>
+              </div>
+            </div>
+          )}
         </FormDialog>
       </div>
     </div>
