@@ -1,6 +1,16 @@
 const express = require('express');
 const { createClient } = require('@supabase/supabase-js');
 const router = express.Router();
+const fs = require('fs');
+const path = require('path');
+
+// Toggle to force mock mode (no database). Set USE_MOCK=1 in env or flip default here
+const USE_MOCK = process.env['USE_MOCK'] === '1' || true;
+
+function readJsonFromRootPublic(filename) {
+  const p = path.join(__dirname, '../../public', filename);
+  return JSON.parse(fs.readFileSync(p, 'utf8'));
+}
 
 // Supabase configuration
 const supabaseUrl = 'https://wbrncnvgnoozshekeebc.supabase.co';
@@ -12,6 +22,10 @@ const supabaseAdmin = createClient(supabaseUrl, supabaseServiceRoleKey);
 // Get all purchases from database
 router.get('/purchases', async (req, res) => {
   try {
+    if (USE_MOCK) {
+      const data = readJsonFromRootPublic('purchase-summary.json');
+      return res.json({ success: true, data, count: data.length, source: 'mock' });
+    }
     console.log('📦 API: Getting purchase data from database...');
 
     const { data: purchases, error } = await supabaseAdmin
@@ -33,11 +47,7 @@ router.get('/purchases', async (req, res) => {
       
       // Fallback to JSON data
       try {
-        const fs = require('fs');
-        const path = require('path');
-        const purchaseData = JSON.parse(
-          fs.readFileSync(path.join(__dirname, '../public/purchase-summary.json'), 'utf8'),
-        );
+        const purchaseData = readJsonFromRootPublic('purchase-summary.json');
         
         console.log(`✅ Found ${purchaseData.length} purchase records in JSON fallback`);
         
@@ -102,11 +112,7 @@ router.get('/purchases', async (req, res) => {
     // Fallback to JSON data on any error
     try {
       console.log('🔄 Falling back to JSON data due to error...');
-      const fs = require('fs');
-      const path = require('path');
-      const purchaseData = JSON.parse(
-        fs.readFileSync(path.join(__dirname, '../public/purchase-summary.json'), 'utf8'),
-      );
+      const purchaseData = readJsonFromRootPublic('purchase-summary.json');
       
       console.log(`✅ Found ${purchaseData.length} purchase records in JSON fallback`);
       
@@ -130,6 +136,10 @@ router.get('/purchases', async (req, res) => {
 // Get all expenses from database
 router.get('/expenses', async (req, res) => {
   try {
+    if (USE_MOCK) {
+      const data = readJsonFromRootPublic('expense-summary.json');
+      return res.json({ success: true, data, count: data.length, source: 'mock' });
+    }
     console.log('💰 API: Getting expense data from database...');
 
     const { data: expenses, error } = await supabaseAdmin
@@ -187,11 +197,7 @@ router.get('/expenses', async (req, res) => {
     // Fallback to JSON data on any error
     try {
       console.log('🔄 Falling back to JSON data due to error...');
-      const fs = require('fs');
-      const path = require('path');
-      const expenseData = JSON.parse(
-        fs.readFileSync(path.join(__dirname, '../public/expense-summary.json'), 'utf8'),
-      );
+      const expenseData = readJsonFromRootPublic('expense-summary.json');
       
       console.log(`✅ Found ${expenseData.length} expense records in JSON fallback`);
       
@@ -215,6 +221,21 @@ router.get('/expenses', async (req, res) => {
 // Get summary statistics
 router.get('/summary', async (req, res) => {
   try {
+    if (USE_MOCK) {
+      const purchases = readJsonFromRootPublic('purchase-summary.json');
+      const expenses = readJsonFromRootPublic('expense-summary.json');
+      const totalPurchaseAmount = purchases.reduce((s, p) => s + (p.total || 0), 0);
+      const totalExpenseAmount = expenses.reduce((s, e) => s + (e.amount || 0), 0);
+      return res.json({
+        success: true,
+        data: {
+          purchases: { count: purchases.length, totalAmount: totalPurchaseAmount, totalQuantity: 0, vendors: 0, materials: 0 },
+          expenses: { count: expenses.length, totalAmount: totalExpenseAmount, totalQuantity: 0 },
+          summary: { totalRecords: purchases.length + expenses.length, totalValue: totalPurchaseAmount + totalExpenseAmount },
+        },
+        source: 'mock',
+      });
+    }
     console.log('📊 API: Getting summary data from database...');
 
     // Get purchase summary
@@ -289,6 +310,13 @@ router.get('/summary', async (req, res) => {
 // Get vendors
 router.get('/vendors', async (req, res) => {
   try {
+    if (USE_MOCK) {
+      const vendors = [
+        { id: 'v1', name: 'Om Sai Associates', category: 'Construction Materials', total_paid: 0, pending_amount: 0 },
+        { id: 'v2', name: 'SVS Traders', category: 'Construction Materials', total_paid: 0, pending_amount: 0 },
+      ];
+      return res.json({ success: true, data: vendors, count: vendors.length, source: 'mock' });
+    }
     const { data: vendors, error } = await supabaseAdmin.from('vendors').select('*').order('name');
 
     if (error) {
@@ -376,6 +404,12 @@ router.get('/vehicles', async (req, res) => {
 // Get all sites from database
 router.get('/sites', async (req, res) => {
   try {
+    if (USE_MOCK) {
+      const sites = [
+        { id: '1', name: 'Rajiv Nagar Residential Complex' },
+      ];
+      return res.json({ success: true, data: sites, count: sites.length, source: 'mock' });
+    }
     console.log('🏗️ API: Getting sites data from database...');
 
     const { data: sites, error } = await supabaseAdmin
@@ -412,6 +446,12 @@ router.get('/sites', async (req, res) => {
 // Get all vehicles from database
 router.get('/vehicles', async (req, res) => {
   try {
+    if (USE_MOCK) {
+      const vehicles = [
+        { id: 'veh-1', registration_number: 'KA-01-AB-1234' },
+      ];
+      return res.json({ success: true, data: vehicles, count: vehicles.length, source: 'mock' });
+    }
     console.log('🚚 API: Getting vehicles data from database...');
 
     const { data: vehicles, error } = await supabaseAdmin
@@ -484,6 +524,10 @@ router.get('/vendors', async (req, res) => {
 // Get all work progress from database
 router.get('/work-progress', async (req, res) => {
   try {
+    if (USE_MOCK) {
+      // Indicate to the frontend to use its built-in mock by returning non-success
+      return res.status(200).json({ success: false, message: 'mock_work_progress_disabled_db' });
+    }
     console.log('🏗️ API: Getting work progress data from database...');
 
     const { data: workProgress, error } = await supabaseAdmin

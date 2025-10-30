@@ -110,101 +110,7 @@ export function WorkProgressPage({ filterBySite }: WorkProgressProps) {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Transform work progress data from API to component interface
-  const transformWorkProgressData = useCallback((workProgress: Record<string, unknown>): WorkProgressEntry => {
-    console.log('🔄 Transforming work progress data:', workProgress);
-    
-    return {
-      id: workProgress['id'] as string || `temp-${Math.random().toString(36).substr(2, 9)}`,
-      siteId: workProgress['site_id'] as string || '',
-      siteName: workProgress['site_name'] as string || 'Unknown Site',
-      workType: workProgress['work_type'] as string || 'General Work',
-      description: workProgress['description'] as string || '',
-      date: (workProgress['work_date'] as string) || (workProgress['date'] as string) || new Date().toISOString().split('T')[0],
-      unit: workProgress['unit'] as string || 'unit',
-      length: workProgress['length'] as number || undefined,
-      breadth: workProgress['breadth'] as number || undefined,
-      thickness: workProgress['thickness'] as number || undefined,
-      totalQuantity: workProgress['total_quantity'] as number || 0,
-      materialsUsed: [], // Will be populated from materials_used if available
-      laborHours: workProgress['labor_hours'] as number || 0,
-      progressPercentage: workProgress['progress_percentage'] as number || 0,
-      notes: workProgress['notes'] as string || '',
-      photos: (workProgress['photos'] as string[]) || [],
-      status: (workProgress['status'] as 'In Progress' | 'Completed' | 'On Hold') || 'In Progress',
-    };
-  }, []);
-
-  // Fetch work progress data from API
-  useEffect(() => {
-    let isMounted = true;
-    
-    const fetchWorkProgress = async (retryCount = 0) => {
-      try {
-        setIsLoading(true);
-        setError(null);
-        
-        const apiUrl = getApiUrl(API_ENDPOINTS.WORK_PROGRESS);
-        console.log('🏗️ Fetching work progress from API URL:', apiUrl);
-        
-        const response = await fetch(apiUrl, {
-          headers: {
-            'Cache-Control': 'no-cache',
-          },
-        });
-        
-        if (response.ok) {
-          const result = await response.json();
-          console.log('🏗️ Raw work progress API response:', result);
-          
-          if (result.success && result.data) {
-            console.log(`🏗️ Work progress data loaded from database`);
-            console.log(`🏗️ Raw data count: ${result.data.length}`);
-            console.log(`🏗️ First item sample:`, result.data[0]);
-            
-            // Transform database data to match component interface
-            const transformedEntries: WorkProgressEntry[] = result.data.map(transformWorkProgressData);
-            console.log(`🏗️ Transformed data count: ${transformedEntries.length}`);
-            console.log(`🏗️ First transformed item:`, transformedEntries[0]);
-            
-            if (isMounted) {
-              setWorkProgressEntries(transformedEntries);
-              console.log('🏗️ Work progress entries state updated successfully');
-            }
-          } else {
-            console.error('❌ Work progress API response not successful:', result);
-            throw new Error(result.message || 'Failed to fetch work progress data');
-          }
-        } else {
-          console.error('❌ Work progress HTTP error:', response.status, response.statusText);
-          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-        }
-      } catch (error) {
-        console.error('Failed to fetch work progress:', error);
-        
-        if (retryCount < 2) {
-          console.log(`🔄 Retrying work progress fetch (attempt ${retryCount + 2}/3)...`);
-          setTimeout(() => fetchWorkProgress(retryCount + 1), 1000 * (retryCount + 1));
-        } else {
-          console.log('🔄 Using mock work progress data as fallback');
-          if (isMounted) {
-            setWorkProgressEntries(mockWorkProgressEntries);
-            setError('Using offline data - API unavailable');
-          }
-        }
-      } finally {
-        if (isMounted) {
-          setIsLoading(false);
-        }
-      }
-    };
-
-    fetchWorkProgress();
-
-    return () => {
-      isMounted = false;
-    };
-  }, [transformWorkProgressData]);
+  // Note: Only one source of truth for fetching is kept below
 
   // Mock data for work progress entries (fallback)
   const mockWorkProgressEntries: WorkProgressEntry[] = [
@@ -332,10 +238,10 @@ export function WorkProgressPage({ filterBySite }: WorkProgressProps) {
                 description: entry['description'] as string,
                 date: entry['work_date'] as string,
                 unit: (entry['unit'] as string) || 'cum',
-                length: (entry['length'] as number) || 0,
-                breadth: (entry['width'] as number) || 0,
-                thickness: (entry['thickness'] as number) || 0,
-                totalQuantity: (entry['quantity'] as number) || 0,
+                length: Number(entry['length'] ?? 0) as number,
+                breadth: Number(entry['width'] ?? 0) as number,
+                thickness: Number(entry['thickness'] ?? 0) as number,
+                totalQuantity: Number(entry['quantity'] ?? 0) as number,
                 materialsUsed: [], // Will be populated based on steel/cement data
                 laborHours: 0, // Not available in CSV
                 progressPercentage: 100, // All entries are completed

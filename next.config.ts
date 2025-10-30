@@ -14,6 +14,12 @@ const nextConfig: NextConfig = {
       },
     ],
   },
+  webpack: (config) => {
+    // Mitigate intermittent ChunkLoadError during local dev by increasing timeout
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (config.output as any).chunkLoadTimeout = 120000; // 120s
+    return config;
+  },
   async redirects() {
     return [
       // Old route redirects to new App Router paths

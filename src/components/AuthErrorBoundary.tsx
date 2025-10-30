@@ -19,6 +19,16 @@ export class AuthErrorBoundary extends React.Component<ErrorBoundaryProps, Error
 
   static getDerivedStateFromError(error: Error): ErrorBoundaryState {
     console.error('Auth Error Boundary caught an error:', error);
+    // If a Webpack/Next chunk fails to load (stale client vs new server),
+    // trigger a soft recovery by forcing a reload with a cache-busting param.
+    if (
+      typeof window !== 'undefined' &&
+      (error.name === 'ChunkLoadError' || /Loading chunk .* failed/i.test(error.message))
+    ) {
+      const url = new URL(window.location.href);
+      url.searchParams.set('cb', Date.now().toString());
+      window.location.replace(url.toString());
+    }
     return { hasError: true, error };
   }
 
