@@ -558,16 +558,6 @@ export function Dashboard({ onNavigate }: DashboardProps) {
                 <InfoTooltip label="Information about quick actions">
                   <p>Frequently used actions for quick access</p>
                 </InfoTooltip>
-                <Button 
-                  onClick={() => {
-                    console.log('🧪 Test button clicked');
-                    onNavigate?.('expenses');
-                  }}
-                  size="sm"
-                  variant="outline"
-                >
-                  Test Navigation
-                </Button>
               </div>
             }
           >
