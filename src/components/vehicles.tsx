@@ -31,7 +31,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
 import { useDialogState } from '@/lib/hooks/useDialogState';
 import { formatDateShort } from '@/lib/utils';
-import { getApiUrl, API_ENDPOINTS } from '@/lib/api-config';
+// import { getApiUrl, API_ENDPOINTS } from '@/lib/api-config';
 
 interface Vehicle {
   id: string;
@@ -116,145 +116,90 @@ export function VehiclesPage({
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Fetch real vehicle data from database API
+  // Mock-only mode: set local mock vehicles
   useEffect(() => {
-    const fetchVehicles = async () => {
-      try {
-        setIsLoading(true);
-
-        // Fetch vehicles data
-        console.log('🚛 Fetching vehicles from:', getApiUrl(API_ENDPOINTS.VEHICLES));
-        const vehiclesResponse = await fetch(getApiUrl(API_ENDPOINTS.VEHICLES));
-        console.log('🚛 Vehicles response status:', vehiclesResponse.status);
-        
-        if (vehiclesResponse.ok) {
-          const vehiclesResult = await vehiclesResponse.json();
-          console.log('🚛 Vehicles API result:', vehiclesResult);
-          
-          if (vehiclesResult.success) {
-            // Transform database data to match component interface
-            const transformedVehicles: Vehicle[] = vehiclesResult.data.map(
-              (vehicle: Record<string, unknown>) => ({
-                id: vehicle['id'] as string,
-                vehicleNumber: vehicle['registration_number'] as string,
-                type: (vehicle['vehicle_type'] as string) || 'Other',
-                make: 'Unknown', // Not available in database
-                model: 'Unknown', // Not available in database
-                year: 2024, // Default year
-                siteId: '1', // Default site
-                siteName: 'Gudibande',
-                status: 'Active',
-                operator: 'Site Operator',
-                isRental: true,
-                vendor: 'Equipment Rental',
-                rentalCostPerDay: 5000, // Default cost
-                rentalStartDate: '2024-01-15',
-                rentalEndDate: '2024-12-31',
-                totalRentalDays: 320,
-                totalRentalCost: 1600000,
-                fuelCapacity: 200,
-                currentFuelLevel: 150,
-                mileage: 2500,
-                lastMaintenanceDate: '2024-01-10',
-                nextMaintenanceDate: '2024-04-10',
-                insuranceExpiry: '2024-12-31',
-                registrationExpiry: '2024-12-31',
-                createdAt: (vehicle['created_at'] as string) || '2024-01-15',
-                lastUpdated: (vehicle['updated_at'] as string) || '2024-03-15',
-              }),
-            );
-            setVehicles(transformedVehicles);
-          }
-        }
-      } catch (error) {
-        console.error('Failed to fetch vehicles:', error);
-        // Fallback to mock data if API fails
-        setVehicles([
-          {
-            id: '1',
-            vehicleNumber: 'EX-001',
-            type: 'Excavator',
-            make: 'CAT',
-            model: '320D',
-            year: 2022,
-            siteId: '1',
-            siteName: 'Residential Complex A',
-            status: 'Active',
-            operator: 'John Smith',
-            isRental: true,
-            vendor: 'Heavy Equipment Rentals',
-            rentalCostPerDay: 8000,
-            rentalStartDate: '2024-01-15',
-            rentalEndDate: '2024-12-31',
-            totalRentalDays: 320,
-            totalRentalCost: 2560000,
-            fuelCapacity: 200,
-            currentFuelLevel: 150,
-            mileage: 2500,
-            lastMaintenanceDate: '2024-01-10',
-            nextMaintenanceDate: '2024-04-10',
-            insuranceExpiry: '2024-12-31',
-            registrationExpiry: '2024-12-31',
-            createdAt: '2024-01-15',
-            lastUpdated: '2024-03-15',
-          },
-          {
-            id: '2',
-            vehicleNumber: 'CR-002',
-            type: 'Crane',
-            make: 'Liebherr',
-            model: 'LTM 1200',
-            year: 2021,
-            siteId: '1',
-            siteName: 'Residential Complex A',
-            status: 'Active',
-            operator: 'Mike Johnson',
-            isRental: true,
-            vendor: 'Crane Solutions Ltd',
-            rentalCostPerDay: 12000,
-            rentalStartDate: '2024-01-20',
-            rentalEndDate: '2024-12-31',
-            totalRentalDays: 290,
-            totalRentalCost: 3480000,
-            fuelCapacity: 300,
-            currentFuelLevel: 200,
-            mileage: 1800,
-            lastMaintenanceDate: '2024-01-15',
-            nextMaintenanceDate: '2024-04-15',
-            insuranceExpiry: '2024-12-31',
-            registrationExpiry: '2024-12-31',
-            createdAt: '2024-01-20',
-            lastUpdated: '2024-03-15',
-          },
-          {
-            id: '3',
-            vehicleNumber: 'TK-003',
-            type: 'Truck',
-            make: 'Tata',
-            model: 'Prima 4038',
-            year: 2023,
-            siteId: '2',
-            siteName: 'Commercial Plaza B',
-            status: 'Maintenance',
-            operator: 'Rajesh Kumar',
-            isRental: false,
-            fuelCapacity: 100,
-            currentFuelLevel: 80,
-            mileage: 4500,
-            lastMaintenanceDate: '2024-02-15',
-            nextMaintenanceDate: '2024-05-15',
-            insuranceExpiry: '2025-06-30',
-            registrationExpiry: '2025-06-30',
-            createdAt: '2024-01-01',
-            lastUpdated: '2024-03-15',
-          },
-        ]);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchVehicles();
+    setIsLoading(true);
+    setVehicles([
+      {
+        id: '1',
+        vehicleNumber: 'EX-001',
+        type: 'Excavator',
+        make: 'CAT',
+        model: '320D',
+        year: 2022,
+        siteId: '1',
+        siteName: 'Residential Complex A',
+        status: 'Active',
+        operator: 'John Smith',
+        isRental: true,
+        vendor: 'Heavy Equipment Rentals',
+        rentalCostPerDay: 8000,
+        rentalStartDate: '2024-01-15',
+        rentalEndDate: '2024-12-31',
+        totalRentalDays: 320,
+        totalRentalCost: 2560000,
+        fuelCapacity: 200,
+        currentFuelLevel: 150,
+        mileage: 2500,
+        lastMaintenanceDate: '2024-01-10',
+        nextMaintenanceDate: '2024-04-10',
+        insuranceExpiry: '2024-12-31',
+        registrationExpiry: '2024-12-31',
+        createdAt: '2024-01-15',
+        lastUpdated: '2024-03-15',
+      },
+      {
+        id: '2',
+        vehicleNumber: 'CR-002',
+        type: 'Crane',
+        make: 'Liebherr',
+        model: 'LTM 1200',
+        year: 2021,
+        siteId: '1',
+        siteName: 'Residential Complex A',
+        status: 'Active',
+        operator: 'Mike Johnson',
+        isRental: true,
+        vendor: 'Crane Solutions Ltd',
+        rentalCostPerDay: 12000,
+        rentalStartDate: '2024-01-20',
+        rentalEndDate: '2024-12-31',
+        totalRentalDays: 290,
+        totalRentalCost: 3480000,
+        fuelCapacity: 300,
+        currentFuelLevel: 200,
+        mileage: 1800,
+        lastMaintenanceDate: '2024-01-15',
+        nextMaintenanceDate: '2024-04-15',
+        insuranceExpiry: '2024-12-31',
+        registrationExpiry: '2024-12-31',
+        createdAt: '2024-01-20',
+        lastUpdated: '2024-03-15',
+      },
+      {
+        id: '3',
+        vehicleNumber: 'TK-003',
+        type: 'Truck',
+        make: 'Tata',
+        model: 'Prima 4038',
+        year: 2023,
+        siteId: '2',
+        siteName: 'Commercial Plaza B',
+        status: 'Maintenance',
+        operator: 'Rajesh Kumar',
+        isRental: false,
+        fuelCapacity: 100,
+        currentFuelLevel: 80,
+        mileage: 4500,
+        lastMaintenanceDate: '2024-02-15',
+        nextMaintenanceDate: '2024-05-15',
+        insuranceExpiry: '2025-06-30',
+        registrationExpiry: '2025-06-30',
+        createdAt: '2024-01-01',
+        lastUpdated: '2024-03-15',
+      },
+    ]);
+    setIsLoading(false);
   }, []);
 
   const [refuelingRecords, setRefuelingRecords] = useState<VehicleRefueling[]>([

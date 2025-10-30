@@ -72,8 +72,8 @@ export default function RealDataDisplay() {
       try {
         setLoading(true);
 
-        // Load purchase data from database API
-        const purchaseResponse = await fetch('http://localhost:3001/api/db/purchases');
+        // Load purchase data from mock API (Next.js serverless route)
+        const purchaseResponse = await fetch('/api/db/purchases');
         if (purchaseResponse.ok) {
           const purchaseResult = await purchaseResponse.json();
           if (purchaseResult.success) {
@@ -81,13 +81,11 @@ export default function RealDataDisplay() {
           }
         }
 
-        // Load expense data from database API
-        const expenseResponse = await fetch('http://localhost:3001/api/db/expenses');
+        // Load expense data from public mock JSON
+        const expenseResponse = await fetch('/expense-summary.json');
         if (expenseResponse.ok) {
-          const expenseResult = await expenseResponse.json();
-          if (expenseResult.success) {
-            setExpenseData(expenseResult.data);
-          }
+          const expenseJson = await expenseResponse.json();
+          setExpenseData(expenseJson);
         }
 
         setError(null);

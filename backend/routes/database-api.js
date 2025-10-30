@@ -1,5 +1,4 @@
 const express = require('express');
-const { createClient } = require('@supabase/supabase-js');
 const router = express.Router();
 const fs = require('fs');
 const path = require('path');
@@ -12,12 +11,11 @@ function readJsonFromRootPublic(filename) {
   return JSON.parse(fs.readFileSync(p, 'utf8'));
 }
 
-// Supabase configuration
-const supabaseUrl = 'https://wbrncnvgnoozshekeebc.supabase.co';
-const supabaseServiceRoleKey =
-  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Indicm5jbnZnbm9venNoZWtlZWJjIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2MTI5NjYyNSwiZXhwIjoyMDc2ODcyNjI1fQ.d-J4dUGUDawQN-sikxK4sZNSRJN4gYtmtttPIX4GxyA';
-
-const supabaseAdmin = createClient(supabaseUrl, supabaseServiceRoleKey);
+// Supabase removed: running in mock-only mode
+// const { createClient } = require('@supabase/supabase-js');
+// const supabaseUrl = process.env.SUPABASE_URL;
+// const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+// const supabaseAdmin = supabaseUrl && supabaseServiceRoleKey ? createClient(supabaseUrl, supabaseServiceRoleKey) : null;
 
 // Get all purchases from database
 router.get('/purchases', async (req, res) => {
@@ -344,6 +342,10 @@ router.get('/vendors', async (req, res) => {
 // Get materials
 router.get('/materials', async (req, res) => {
   try {
+    if (USE_MOCK) {
+      const materials = [];
+      return res.json({ success: true, data: materials, count: materials.length, source: 'mock' });
+    }
     const { data: materials, error } = await supabaseAdmin
       .from('materials')
       .select('*')
@@ -374,6 +376,12 @@ router.get('/materials', async (req, res) => {
 // Get vehicles
 router.get('/vehicles', async (req, res) => {
   try {
+    if (USE_MOCK) {
+      const vehicles = [
+        { id: 'veh-1', registration_number: 'KA-01-AB-1234' },
+      ];
+      return res.json({ success: true, data: vehicles, count: vehicles.length, source: 'mock' });
+    }
     const { data: vehicles, error } = await supabaseAdmin
       .from('vehicles')
       .select('*')
@@ -525,7 +533,6 @@ router.get('/vendors', async (req, res) => {
 router.get('/work-progress', async (req, res) => {
   try {
     if (USE_MOCK) {
-      // Indicate to the frontend to use its built-in mock by returning non-success
       return res.status(200).json({ success: false, message: 'mock_work_progress_disabled_db' });
     }
     console.log('🏗️ API: Getting work progress data from database...');

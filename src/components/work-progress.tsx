@@ -49,7 +49,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { useDialogState } from '@/lib/hooks/useDialogState';
 import { useTableState } from '@/lib/hooks/useTableState';
 import { formatDateShort } from '@/lib/utils';
-import { getApiUrl, API_ENDPOINTS } from '@/lib/api-config';
+// import { getApiUrl, API_ENDPOINTS } from '@/lib/api-config';
 
 interface WorkProgressEntry {
   id: string;
@@ -209,71 +209,11 @@ export function WorkProgressPage({ filterBySite }: WorkProgressProps) {
   // Form ref for submission
   const formRef = useRef<HTMLFormElement>(null);
 
-  // Fetch work progress data from API
+  // Mock-only mode: use local mock entries
   React.useEffect(() => {
-    const fetchWorkProgress = async () => {
-      try {
-        setIsLoading(true);
-        setError(null);
-        console.log('🏗️ Fetching work progress from:', getApiUrl(API_ENDPOINTS.WORK_PROGRESS));
-        const response = await fetch(getApiUrl(API_ENDPOINTS.WORK_PROGRESS), {
-          headers: {
-            'Cache-Control': 'no-cache',
-          },
-        });
-        console.log('🏗️ Work progress response status:', response.status);
-        
-        if (response.ok) {
-          const result = await response.json();
-          console.log('🏗️ Work progress API result:', result);
-          
-          if (result.success) {
-            // Transform database data to match component interface
-            const transformedEntries: WorkProgressEntry[] = result.data.map(
-              (entry: Record<string, unknown>) => ({
-                id: entry['id'] as string,
-                siteId: entry['site_id'] as string,
-                siteName: 'Gudibande', // From existing site data
-                workType: 'Construction', // Default work type
-                description: entry['description'] as string,
-                date: entry['work_date'] as string,
-                unit: (entry['unit'] as string) || 'cum',
-                length: Number(entry['length'] ?? 0) as number,
-                breadth: Number(entry['width'] ?? 0) as number,
-                thickness: Number(entry['thickness'] ?? 0) as number,
-                totalQuantity: Number(entry['quantity'] ?? 0) as number,
-                materialsUsed: [], // Will be populated based on steel/cement data
-                laborHours: 0, // Not available in CSV
-                progressPercentage: 100, // All entries are completed
-                notes: (entry['remarks'] as string) || '',
-                photos: [],
-                status: 'Completed' as WorkProgressEntry['status'],
-              }),
-            );
-            setWorkProgressEntries(transformedEntries);
-          } else {
-            console.error('❌ API returned error:', result.message);
-            setError(result.message || 'Failed to fetch work progress data');
-            // Fallback to mock data
-            setWorkProgressEntries(mockWorkProgressEntries);
-          }
-        } else {
-          console.error('❌ Failed to fetch work progress:', response.status);
-          setError(`HTTP ${response.status}: ${response.statusText}`);
-          // Fallback to mock data
-          setWorkProgressEntries(mockWorkProgressEntries);
-        }
-      } catch (error) {
-        console.error('❌ Error fetching work progress:', error);
-        setError('Network error - using offline data');
-        // Fallback to mock data
-        setWorkProgressEntries(mockWorkProgressEntries);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchWorkProgress();
+    setIsLoading(true);
+    setWorkProgressEntries(mockWorkProgressEntries);
+    setIsLoading(false);
   }, []);
 
   // Filter work progress entries

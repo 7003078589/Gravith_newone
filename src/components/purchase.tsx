@@ -15,7 +15,7 @@ import React, { useState, useEffect, useCallback, useMemo } from 'react';
 
 import { useDialogState } from '../lib/hooks/useDialogState';
 import { useTableState } from '../lib/hooks/useTableState';
-import { getApiUrl, API_ENDPOINTS } from '@/lib/api-config';
+// import { getApiUrl, API_ENDPOINTS } from '@/lib/api-config';
 
 import { DataTable } from './common/DataTable';
 import { FormDialog } from './common/FormDialog';
@@ -43,10 +43,7 @@ interface PurchasePageProps {
 }
 
 export function PurchasePage({ filterBySite }: PurchasePageProps = {}) {
-  const { addMaterial, updateMaterial, deleteMaterial } = useMaterials();
-  const [materials, setMaterials] = useState<SharedMaterial[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const { addMaterial, updateMaterial, deleteMaterial, materials } = useMaterials();
 
   // Memoized data transformation function
   const transformPurchaseData = useCallback((purchase: Record<string, unknown>): SharedMaterial => {
@@ -100,79 +97,10 @@ export function PurchasePage({ filterBySite }: PurchasePageProps = {}) {
     return transformed;
   }, []);
 
-  // Fetch real purchase data from database API with retry logic
+  // Mock-only: use Materials context initial data; no fetching
   useEffect(() => {
-    let isMounted = true;
-    
-    const fetchPurchases = async (retryCount = 0) => {
-      try {
-        setIsLoading(true);
-        setError(null);
-        
-        const apiUrl = getApiUrl(API_ENDPOINTS.PURCHASES);
-        console.log('📦 Fetching from API URL:', apiUrl);
-        
-        const response = await fetch(apiUrl, {
-          headers: {
-            'Cache-Control': 'no-cache',
-          },
-        });
-        
-        if (response.ok) {
-          const result = await response.json();
-          console.log('📦 Raw API response:', result);
-          
-          if (result.success && result.data) {
-            console.log(`📦 Purchase data loaded from ${result.source || 'unknown'} source`);
-            console.log(`📦 Raw data count: ${result.data.length}`);
-            console.log(`📦 First item sample:`, result.data[0]);
-            
-            // Transform database data to match component interface
-            const transformedMaterials: SharedMaterial[] = result.data.map(transformPurchaseData);
-            console.log(`📦 Transformed data count: ${transformedMaterials.length}`);
-            console.log(`📦 First transformed item:`, transformedMaterials[0]);
-            
-            if (isMounted) {
-              setMaterials(transformedMaterials);
-              console.log('📦 Materials state updated successfully');
-            }
-          } else {
-            console.error('❌ API response not successful:', result);
-            throw new Error(result.message || 'Failed to fetch purchase data');
-          }
-        } else {
-          console.error('❌ HTTP error:', response.status, response.statusText);
-          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-        }
-      } catch (error) {
-        console.error('Failed to fetch purchases:', error);
-        
-        if (isMounted) {
-          setError(error instanceof Error ? error.message : 'Failed to fetch purchase data');
-          
-          // Retry logic for network errors
-          if (retryCount < 2 && error instanceof Error && error.message.includes('fetch')) {
-            console.log(`Retrying fetch (attempt ${retryCount + 1}/2)...`);
-            setTimeout(() => fetchPurchases(retryCount + 1), 1000 * (retryCount + 1));
-            return;
-          }
-          
-          // Fallback to empty array if all retries fail
-          setMaterials([]);
-        }
-      } finally {
-        if (isMounted) {
-          setIsLoading(false);
-        }
-      }
-    };
-
-    fetchPurchases();
-
-    return () => {
-      isMounted = false;
-    };
-  }, [transformPurchaseData]);
+    // no-op
+  }, []);
 
   // Use shared state hooks
   const tableState = useTableState({
@@ -250,11 +178,9 @@ export function PurchasePage({ filterBySite }: PurchasePageProps = {}) {
   useEffect(() => {
     console.log('📦 Materials state updated:', {
       count: materials.length,
-      isLoading,
-      error,
       firstItem: materials[0]
     });
-  }, [materials, isLoading, error]);
+  }, [materials]);
 
   const handleFormSubmit = (materialData: Omit<SharedMaterial, 'id'>) => {
     if (dialog.editingItem) {
@@ -277,49 +203,7 @@ export function PurchasePage({ filterBySite }: PurchasePageProps = {}) {
     deleteMaterial(materialId);
   };
 
-  // Show loading state
-  if (isLoading) {
-    return (
-      <div className="w-full bg-background">
-        <PurchaseTabs />
-        <div className="p-4 md:p-6 space-y-6 max-w-full">
-          <div className="flex items-center justify-center h-64">
-            <div className="text-center space-y-4">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
-              <p className="text-muted-foreground">Loading purchase data...</p>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  // Show error state
-  if (error) {
-    return (
-      <div className="w-full bg-background">
-        <PurchaseTabs />
-        <div className="p-4 md:p-6 space-y-6 max-w-full">
-          <div className="flex items-center justify-center h-64">
-            <div className="text-center space-y-4">
-              <AlertCircle className="h-12 w-12 text-destructive mx-auto" />
-              <div>
-                <h3 className="text-lg font-semibold text-destructive">Failed to load purchase data</h3>
-                <p className="text-muted-foreground mt-2">{error}</p>
-                <Button 
-                  onClick={() => window.location.reload()} 
-                  className="mt-4"
-                  variant="outline"
-                >
-                  Retry
-                </Button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
+  // No loading or error screens in mock-only mode
 
   return (
     <div className="w-full bg-background">

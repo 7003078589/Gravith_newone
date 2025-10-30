@@ -27,7 +27,7 @@ import { ExpensesPage } from './expenses';
 import { PurchasePage } from './purchase';
 import { SchedulingPage } from './scheduling';
 import { WorkProgressPage } from './work-progress';
-import { getApiUrl, API_ENDPOINTS } from '@/lib/api-config';
+// import { getApiUrl, API_ENDPOINTS } from '@/lib/api-config';
 
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
@@ -377,49 +377,11 @@ export function SitesPage({ selectedSite: propSelectedSite, onSiteSelect }: Site
   const [selectedSite, setSelectedSite] = useState<string>(propSelectedSite || '1');
   const [isLoading, setIsLoading] = useState(true);
 
-  // Fetch real site data from database API
+  // Mock-only mode: use local mock data
   useEffect(() => {
-    const fetchSites = async () => {
-      try {
-        setIsLoading(true);
-
-        // Fetch sites data
-        console.log('🏗️ Fetching sites from:', getApiUrl(API_ENDPOINTS.SITES));
-        const sitesResponse = await fetch(getApiUrl(API_ENDPOINTS.SITES));
-        console.log('🏗️ Sites response status:', sitesResponse.status);
-        if (sitesResponse.ok) {
-          const sitesResult = await sitesResponse.json();
-          console.log('🏗️ Sites API result:', sitesResult);
-          
-          if (sitesResult.success) {
-            // Transform database data to match component interface
-            const transformedSites: Site[] = sitesResult.data.map(
-              (site: Record<string, unknown>) => ({
-                id: site['id'] as string,
-                name: site['name'] as string,
-                location: (site['location'] as string) || 'Gudibande, India',
-                startDate: '2024-01-15', // Default start date
-                expectedEndDate: '2024-12-15', // Default end date
-                status: site['is_active'] ? 'Active' : 'Inactive',
-                budget: 50000000, // Default budget
-                spent: 0, // Will be calculated from purchases
-                description: `Construction site at ${site['location']}`,
-                progress: 0, // Will be calculated
-              }),
-            );
-            setSites(transformedSites);
-          }
-        }
-      } catch (error) {
-        console.error('Failed to fetch sites:', error);
-        // Fallback to mock data if API fails
-        setSites(mockSites);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchSites();
+    setIsLoading(true);
+    setSites(mockSites);
+    setIsLoading(false);
   }, []);
 
   // Update selectedSite when prop changes

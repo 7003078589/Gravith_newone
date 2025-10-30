@@ -293,51 +293,37 @@ export function Dashboard({ onNavigate }: DashboardProps) {
     }
   }, [cacheBustTimestamp, onNavigate]);
 
-  // Fetch real data from database API with retry logic
+  // Fetch real data from mock JSON files
   useEffect(() => {
     let isMounted = true;
-    
-    const fetchRealData = async (retryCount = 0) => {
-        try {
-          // setIsLoading(true);
-
-        // Fetch summary data
-        const summaryResponse = await fetch('http://localhost:3001/api/db/summary', {
-          headers: {
-            'Cache-Control': 'no-cache',
-          },
-        });
-        
-        if (summaryResponse.ok) {
-          const summaryResult = await summaryResponse.json();
-          if (summaryResult.success && isMounted) {
-            console.log('📊 Dashboard data loaded successfully');
-            setRealData(summaryResult.data);
-          }
-        } else {
-          throw new Error(`HTTP ${summaryResponse.status}: ${summaryResponse.statusText}`);
-        }
-      } catch (error) {
-        console.error('Failed to fetch real data:', error);
-        
-        // Retry logic for network errors
-        if (isMounted && retryCount < 2 && error instanceof Error && error.message.includes('fetch')) {
-          console.log(`Retrying dashboard data fetch (attempt ${retryCount + 1}/2)...`);
-          setTimeout(() => fetchRealData(retryCount + 1), 1000 * (retryCount + 1));
-          return;
-        }
-        } finally {
+    const fetchRealData = async () => {
+      try {
+        const [purchasesResp, expensesResp] = await Promise.all([
+          fetch('/purchase-summary.json', { headers: { 'Cache-Control': 'no-cache' } }),
+          fetch('/expense-summary.json', { headers: { 'Cache-Control': 'no-cache' } }),
+        ]);
+        if (purchasesResp.ok && expensesResp.ok) {
+          const [purchases, expenses] = await Promise.all([purchasesResp.json(), expensesResp.json()]);
           if (isMounted) {
-            // setIsLoading(false);
+            const totalPurchases = purchases.length || 0;
+            const totalPurchaseValue = purchases.reduce(
+              (sum: number, p: Record<string, unknown>) => sum + (Number(p['total_amount'] ?? p['value'] ?? 0)),
+              0,
+            );
+            const totalExpenses = expenses.length || 0;
+            const totalExpenseAmount = expenses.reduce(
+              (sum: number, e: Record<string, unknown>) => sum + (Number(e['amount'] ?? 0)),
+              0,
+            );
+            setRealData({ totalPurchases, totalPurchaseValue, totalExpenses, totalExpenseAmount });
           }
         }
+      } catch (err) {
+        // Ignore; keep defaults
+      }
     };
-
     fetchRealData();
-
-    return () => {
-      isMounted = false;
-    };
+    return () => { isMounted = false; };
   }, []);
 
   // Use real data for quick stats

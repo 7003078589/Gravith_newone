@@ -24,7 +24,7 @@ import React, { useState, useEffect } from 'react';
 
 import { useTableState } from '../lib/hooks/useTableState';
 import { formatDate } from '../lib/utils';
-import { getApiUrl, API_ENDPOINTS } from '@/lib/api-config';
+// import { getApiUrl, API_ENDPOINTS } from '@/lib/api-config';
 
 import type { Vendor } from './vendors-columns';
 import { vendorColumns, createVendorTableData } from './vendors-columns';
@@ -168,53 +168,11 @@ export function VendorsPage() {
   const [editingVendor, setEditingVendor] = useState<Vendor | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Fetch real vendor data from database API
+  // Mock-only mode: use local mock data
   useEffect(() => {
-    const fetchVendors = async () => {
-      try {
-        setIsLoading(true);
-        console.log('🏪 Fetching vendors from:', getApiUrl(API_ENDPOINTS.VENDORS));
-        const response = await fetch(getApiUrl(API_ENDPOINTS.VENDORS));
-        console.log('🏪 Vendors response status:', response.status);
-        
-        if (response.ok) {
-          const result = await response.json();
-          console.log('🏪 Vendors API result:', result);
-          
-          if (result.success) {
-            // Transform database data to match component interface
-            const transformedVendors: Vendor[] = result.data.map(
-              (vendor: Record<string, unknown>) => ({
-                id: vendor['id'] as string,
-                name: vendor['name'] as string,
-                contactPerson: (vendor['contact_person'] as string) || 'Unknown',
-                email: (vendor['email'] as string) || 'N/A',
-                phone: (vendor['phone'] as string) || 'N/A',
-                address: (vendor['address'] as string) || 'N/A',
-                category: (vendor['category'] as string) || 'Construction',
-                organizationId: vendor['organization_id'] as string,
-                totalPaid: (vendor['total_paid'] as number) || 0,
-                pendingAmount: (vendor['pending_amount'] as number) || 0,
-                status: (vendor['status'] as string) || 'active',
-                registrationDate: (vendor['registration_date'] as string) || new Date().toISOString().split('T')[0],
-                notes: (vendor['notes'] as string) || '',
-                createdAt: vendor['created_at'] as string,
-                updatedAt: vendor['updated_at'] as string,
-              }),
-            );
-            setVendors(transformedVendors);
-          }
-        }
-      } catch (error) {
-        console.error('Failed to fetch vendors:', error);
-        // Fallback to empty array if API fails
-        setVendors([]);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchVendors();
+    setIsLoading(true);
+    setVendors(mockVendors);
+    setIsLoading(false);
   }, []);
 
   // Use shared state hooks

@@ -308,27 +308,30 @@ export function SiteDetailPage({ siteId }: SiteDetailPageProps) {
   useEffect(() => {
     const fetchPurchases = async () => {
       try {
-        const response = await fetch('http://localhost:3001/api/db/purchases');
+        const response = await fetch('/api/db/purchases');
         if (response.ok) {
           const result = await response.json();
           if (result.success) {
-            // Transform database data to match component interface
+            // Transform database (now mock API) data to match component interface
             const transformedPurchases: SitePurchase[] = result.data.map(
               (purchase: Record<string, unknown>) => ({
-                id: purchase['id'] as string,
+                id: (purchase['id'] as string) || (purchase['purchase_id'] as string) || Math.random().toString(),
                 materialName:
                   (purchase['material_name'] as string) ||
                   (purchase['materials'] as Record<string, unknown>)?.['name'] ||
+                  (purchase['material'] as string) ||
                   'Unknown Material',
                 quantity: (purchase['quantity'] as number) || 0,
-                unit: (purchase['unit'] as string) || 'Ton',
+                unit: (purchase['unit'] as string) || (purchase['unit_of_measure'] as string) || 'Ton',
                 unitRate: (purchase['rate'] as number) || 0,
-                totalAmount: (purchase['total_amount'] as number) || 0,
+                totalAmount: (purchase['total_amount'] as number) || (purchase['value'] as number) || 0,
                 vendor:
-                  (purchase['vendors'] as Record<string, unknown>)?.['name'] || 'Unknown Vendor',
+                  (purchase['vendors'] as Record<string, unknown>)?.['name'] ||
+                  (purchase['vendor'] as string) ||
+                  'Unknown Vendor',
                 purchaseDate:
                   (purchase['purchase_date'] as string) || new Date().toISOString().split('T')[0],
-                invoiceNumber: purchase['purchase_id'] as string,
+                invoiceNumber: (purchase['purchase_id'] as string) || (purchase['invoice'] as string) || 'INV',
               }),
             );
             setSitePurchases(transformedPurchases);
@@ -342,34 +345,30 @@ export function SiteDetailPage({ siteId }: SiteDetailPageProps) {
 
     const fetchExpenses = async () => {
       try {
-        const response = await fetch('http://localhost:3001/api/db/expenses');
+        // Use public mock JSON directly for expenses
+        const response = await fetch('/expense-summary.json');
         if (response.ok) {
-          const result = await response.json();
-          if (result.success) {
-            // Transform database data to match component interface
-            const transformedExpenses: Expense[] = result.data.map(
-              (expense: Record<string, unknown>) => ({
-                id: expense['id'] as string,
-                category: (expense['category'] as string) || 'Fuel',
-                subcategory: 'Diesel',
-                description:
-                  (expense['description'] as string) ||
-                  `Diesel for ${(expense['vehicle_info'] as string) || 'Vehicle'}`,
-                amount: (expense['amount'] as number) || 0,
-                date: (expense['expense_date'] as string) || new Date().toISOString().split('T')[0],
-                vendor: 'Fuel Station',
-                siteId: expense['site_id'] as string,
-                siteName: (expense['sites'] as Record<string, unknown>)?.['name'] || 'Gudibande',
-                receipt: expense['expense_id'] as string,
-                status: expense['status'] === 'approved' ? 'paid' : 'pending',
-                approvedBy: 'Site Manager',
-                organizationId: expense['organization_id'] as string,
-                createdAt: expense['created_at'] as string,
-                updatedAt: expense['updated_at'] as string,
-              }),
-            );
-            setSiteExpenses(transformedExpenses.filter((exp) => exp.siteId === siteId));
-          }
+          const json = await response.json();
+          const transformedExpenses: Expense[] = json.map(
+            (expense: Record<string, unknown>) => ({
+              id: (expense['id'] as string) || (expense['expense_id'] as string) || Math.random().toString(),
+              category: (expense['category'] as string) || 'Fuel',
+              subcategory: 'Diesel',
+              description: (expense['description'] as string) || `Diesel for ${(expense['vehicle_info'] as string) || 'Vehicle'}`,
+              amount: (expense['amount'] as number) || 0,
+              date: (expense['expense_date'] as string) || new Date().toISOString().split('T')[0],
+              vendor: 'Fuel Station',
+              siteId: (expense['site_id'] as string) || '1',
+              siteName: (expense['sites'] as Record<string, unknown>)?.['name'] || 'Gudibande',
+              receipt: (expense['expense_id'] as string) || 'RCT',
+              status: expense['status'] === 'approved' ? 'paid' : 'pending',
+              approvedBy: 'Site Manager',
+              organizationId: (expense['organization_id'] as string) || 'org-1',
+              createdAt: (expense['created_at'] as string) || new Date().toISOString(),
+              updatedAt: (expense['updated_at'] as string) || new Date().toISOString(),
+            }),
+          );
+          setSiteExpenses(transformedExpenses.filter((exp) => exp.siteId === siteId));
         }
       } catch (error) {
         console.error('Failed to fetch expenses:', error);

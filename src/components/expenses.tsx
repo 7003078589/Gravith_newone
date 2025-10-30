@@ -29,7 +29,7 @@ import {
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useDialogState } from '@/lib/hooks/useDialogState';
 import { useTableState } from '@/lib/hooks/useTableState';
-import { getApiUrl, API_ENDPOINTS } from '@/lib/api-config';
+// import { getApiUrl, API_ENDPOINTS } from '@/lib/api-config';
 
 import type { Expense } from '@/types';
 import type { ExpenseFormData } from '@/components/forms/ExpenseForm';
@@ -184,55 +184,11 @@ export function ExpensesPage({ filterBySite }: ExpensesPageProps = {}) {
     },
   });
 
-  // Fetch real data from database API
+  // Mock-only mode: use local mock data, no API calls
   useEffect(() => {
-    const fetchExpenses = async () => {
-      try {
-        setIsLoading(true);
-        console.log('💰 Fetching expenses from:', getApiUrl(API_ENDPOINTS.EXPENSES));
-        const response = await fetch(getApiUrl(API_ENDPOINTS.EXPENSES));
-        console.log('💰 Expenses response status:', response.status);
-        
-        if (response.ok) {
-          const result = await response.json();
-          console.log('💰 Expenses API result:', result);
-          
-          if (result.success) {
-            // Transform database data to match component interface
-            const transformedExpenses: Expense[] = result.data.map(
-              (expense: Record<string, unknown>) => ({
-                id: expense['id'] as string,
-                category: (expense['category'] as string) || 'Fuel',
-                subcategory: 'Diesel',
-                description:
-                  (expense['description'] as string) ||
-                  `Diesel for ${(expense['vehicle_info'] as string) || 'Vehicle'}`,
-                amount: (expense['amount'] as number) || 0,
-                date: (expense['expense_date'] as string) || new Date().toISOString().split('T')[0],
-                vendor: 'Fuel Station', // Default vendor for fuel expenses
-                siteId: expense['site_id'] as string,
-                siteName: (expense['sites'] as Record<string, unknown>)?.['name'] || 'Gudibande',
-                receipt: expense['expense_id'] as string,
-                status: expense['status'] === 'approved' ? 'paid' : 'pending',
-                approvedBy: 'Site Manager',
-                organizationId: expense['organization_id'] as string,
-                createdAt: expense['created_at'] as string,
-                updatedAt: expense['updated_at'] as string,
-              }),
-            );
-            setExpenses(transformedExpenses);
-          }
-        }
-      } catch (error) {
-        console.error('Failed to fetch expenses:', error);
-        // Fallback to mock data if API fails
-        setExpenses(mockExpenses);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchExpenses();
+    setIsLoading(true);
+    setExpenses(mockExpenses);
+    setIsLoading(false);
   }, []);
 
   const handleExpenseSubmit = async (formData: ExpenseFormData) => {

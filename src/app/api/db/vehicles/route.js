@@ -1,15 +1,3 @@
-// Vercel serverless function for vehicles API
-import { createClient } from '@supabase/supabase-js';
-
-const supabaseUrl = process.env.SUPABASE_URL;
-const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-
-if (!supabaseUrl || !supabaseServiceRoleKey) {
-  console.error('Missing Supabase environment variables');
-}
-
-const supabaseAdmin = createClient(supabaseUrl, supabaseServiceRoleKey);
-
 export async function GET() {
   // Set CORS headers
   const headers = {
@@ -19,26 +7,8 @@ export async function GET() {
   };
 
   try {
-    console.log('🚛 API: Getting vehicles data from database...');
-
-    const { data: vehicles, error } = await supabaseAdmin
-      .from('vehicles')
-      .select('*')
-      .order('registration_number', { ascending: true });
-
-    if (error) {
-      console.error('❌ Database error:', error);
-      return new Response(JSON.stringify({
-        success: false,
-        error: 'Failed to fetch vehicles from database',
-        details: error.message,
-      }), {
-        status: 500,
-        headers: { ...headers, 'Content-Type': 'application/json' },
-      });
-    }
-
-    console.log(`✅ Found ${vehicles?.length || 0} vehicles`);
+    console.log('🚛 API (mock): Returning mock vehicles data');
+    const vehicles = [];
     return new Response(JSON.stringify({
       success: true,
       data: vehicles || [],
