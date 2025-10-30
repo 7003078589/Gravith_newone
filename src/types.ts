@@ -138,6 +138,8 @@ export interface MaterialReceipt {
   id: string;
   date: string;
   vehicleNumber: string;
+  vendorId?: string;
+  vendorName?: string;
   materialId: string;
   materialName: string;
   filledWeight: number;

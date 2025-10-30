@@ -8,6 +8,7 @@ import { toast } from 'sonner';
 import * as z from 'zod';
 
 import { getActiveMaterials } from '../shared/materialMasterData';
+import { vendorsMock } from '@/components/shared/vendorsData';
 import { useMaterialReceipts } from '../shared/materialReceiptsContext';
 
 import { Button } from '@/components/ui/button';
@@ -33,6 +34,7 @@ interface MaterialReceiptFormProps {
 // Form schema with Zod validation
 const receiptFormSchema = z.object({
   date: z.date(),
+  vendorId: z.string().min(1, 'Please select a vendor.'),
   vehicleNumber: z
     .string()
     .min(1, 'Vehicle number is required.')
@@ -59,6 +61,7 @@ export function MaterialReceiptForm({
     resolver: zodResolver(receiptFormSchema),
     defaultValues: {
       date: editingReceipt?.date ? new Date(editingReceipt.date) : undefined,
+      vendorId: editingReceipt?.vendorId || '',
       vehicleNumber: editingReceipt?.vehicleNumber || '',
       materialId: editingReceipt?.materialId || '',
       materialName: editingReceipt?.materialName || '',
@@ -73,10 +76,13 @@ export function MaterialReceiptForm({
 
   function handleFormSubmit(data: ReceiptFormData) {
     const netWeight = data.filledWeight - data.emptyWeight;
+    const vendor = vendorsMock.find((v) => v.id === data.vendorId);
 
     const receiptData: Omit<MaterialReceipt, 'id' | 'createdAt' | 'updatedAt'> = {
       date: data.date.toISOString().split('T')[0],
       vehicleNumber: data.vehicleNumber,
+      vendorId: data.vendorId,
+      vendorName: vendor?.name,
       materialId: data.materialId,
       materialName: data.materialName,
       filledWeight: data.filledWeight,
@@ -148,6 +154,31 @@ export function MaterialReceiptForm({
           <FieldGroup>
             {/* Date and Vehicle Number Row */}
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+              <Controller
+                name="vendorId"
+                control={form.control}
+                render={({ field, fieldState }) => (
+                  <Field data-invalid={fieldState.invalid}>
+                    <FieldLabel htmlFor={`${formId}-vendor`}>
+                      Vendor <span className="text-destructive">*</span>
+                    </FieldLabel>
+                    <Select value={field.value} onValueChange={field.onChange}>
+                      <SelectTrigger id={`${formId}-vendor`} aria-invalid={fieldState.invalid}>
+                        <SelectValue placeholder="Select vendor" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {vendorsMock.map((v) => (
+                          <SelectItem key={v.id} value={v.id}>
+                            {v.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FieldDescription>Supplier providing this material.</FieldDescription>
+                    {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                  </Field>
+                )}
+              />
               <Controller
                 name="date"
                 control={form.control}

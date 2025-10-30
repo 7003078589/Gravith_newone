@@ -218,7 +218,7 @@ export function WorkProgressPage({ filterBySite }: WorkProgressProps) {
 
   // Filter work progress entries
   const filteredEntries = workProgressEntries.filter((entry) => {
-    const matchesSite = !filterBySite || entry.siteName === filterBySite;
+    const matchesSite = !filterBySite || entry.siteId === filterBySite || entry.siteName === filterBySite;
     const matchesSearch =
       tableState.searchTerm === '' ||
       entry.description.toLowerCase().includes(tableState.searchTerm.toLowerCase()) ||
@@ -231,7 +231,7 @@ export function WorkProgressPage({ filterBySite }: WorkProgressProps) {
 
   // Calculate statistics (filtered by site if applicable)
   const entriesForStats = filterBySite
-    ? workProgressEntries.filter((e) => e.siteName === filterBySite)
+    ? workProgressEntries.filter((e) => e.siteId === filterBySite || e.siteName === filterBySite)
     : workProgressEntries;
   const totalEntries = entriesForStats.length;
   const completedEntries = entriesForStats.filter((entry) => entry.status === 'Completed').length;
@@ -662,8 +662,8 @@ export function WorkProgressPage({ filterBySite }: WorkProgressProps) {
                       </Button>
                     }
                   >
-                    <div className="flex flex-col max-h-[80vh]">
-                      <ScrollArea className="flex-1 pr-4 max-h-[60vh]">
+                    <div className="flex flex-col">
+                      <div className="flex-1 pr-4">
                         <form ref={formRef} onSubmit={handleFormSubmit} className="space-y-6">
                           {/* Basic Information */}
                           <div className="space-y-4">
@@ -1161,7 +1161,7 @@ export function WorkProgressPage({ filterBySite }: WorkProgressProps) {
                             />
                           </div>
                         </form>
-                      </ScrollArea>
+                      </div>
 
                       <div className="flex justify-end gap-2 pt-4 border-t bg-background mt-4">
                         <Button

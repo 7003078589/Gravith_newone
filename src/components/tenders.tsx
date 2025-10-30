@@ -21,7 +21,7 @@ import {
   Download,
   Building2,
 } from 'lucide-react';
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { toast } from 'sonner';
 
 import { formatDate, formatDateShort } from '../lib/utils';
@@ -333,6 +333,31 @@ export function TendersPage() {
     setIsConvertDialogOpen(false);
   };
 
+  // Horizontal scroller ref for cards
+  const scrollerRef = useRef<HTMLDivElement | null>(null);
+  const [frameWidth, setFrameWidth] = useState<number | undefined>(undefined);
+
+  const scrollByFrame = (direction: 'left' | 'right') => {
+    const el = scrollerRef.current;
+    if (!el) return;
+    const firstCard = el.querySelector('.tender-card') as HTMLElement | null;
+    // Keep original card size; scroll exactly 3 cards per click
+    const cardWidth = firstCard?.offsetWidth || 360;
+    const gapPx = 16; // gap-4
+    const distance = (cardWidth + gapPx) * 3;
+    el.scrollBy({ left: direction === 'left' ? -distance : distance, behavior: 'smooth' });
+  };
+
+  // Measure first card and set a fixed frame width to show exactly 3 cards
+  React.useEffect(() => {
+    const el = scrollerRef.current;
+    if (!el) return;
+    const firstCard = el.querySelector('.tender-card') as HTMLElement | null;
+    const cardWidth = firstCard?.offsetWidth || 360;
+    const gapPx = 16;
+    setFrameWidth(cardWidth * 3 + gapPx * 2);
+  }, [filteredTenders.length]);
+
   return (
     <div className="h-full w-full bg-background flex flex-col">
       {/* Top Section - Tenders List */}
@@ -477,10 +502,17 @@ export function TendersPage() {
           </CardContent>
         </Card>
 
-        {/* Tenders List */}
+        {/* Tenders List - horizontal carousel with 3 per frame */}
         <ScrollArea className="flex-1">
           <div className="p-4 md:p-6">
-            <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
+            {(() => {
+              const computedFrame = frameWidth ? frameWidth + 32 : undefined; // account for px-4 padding
+              return (
+                <div className="mx-auto" style={{ width: computedFrame }}>
+                  <div
+                ref={scrollerRef}
+                className="flex gap-4 overflow-x-auto pb-2 px-4 snap-x snap-mandatory scroll-smooth"
+              >
               {filteredTenders.map((tender) => {
                 const StatusIcon = getStatusIcon(tender.status);
                 const statusColor = getStatusColor(tender.status);
@@ -488,9 +520,9 @@ export function TendersPage() {
                 return (
                   <Card
                     key={tender.id}
-                    className={`group relative cursor-pointer transition-all duration-300 overflow-hidden ${
+                    className={`tender-card group relative cursor-pointer transition-shadow duration-300 overflow-visible flex-shrink-0 snap-start min-w-[360px] w-[360px] ${
                       selectedTenderId === tender.id
-                        ? 'border-primary shadow-lg ring-2 ring-primary/30 scale-[1.02]'
+                        ? 'border-primary shadow-lg ring-2 ring-primary/30'
                         : 'border-border hover:border-primary/40 hover:shadow-md'
                     }`}
                     onClick={() => setSelectedTenderId(tender.id)}
@@ -613,7 +645,29 @@ export function TendersPage() {
                   </Card>
                 );
               })}
-            </div>
+                  </div>
+                  {/* Navigation controls under the row */}
+                  <div className="mt-3 flex items-center justify-between px-6">
+                    <button
+                      type="button"
+                      aria-label="Previous tenders"
+                      className="h-10 w-10 rounded-full bg-background border shadow hover:bg-muted flex items-center justify-center"
+                      onClick={() => scrollByFrame('left')}
+                    >
+                      ‹
+                    </button>
+                    <button
+                      type="button"
+                      aria-label="Next tenders"
+                      className="h-10 w-10 rounded-full bg-background border shadow hover:bg-muted flex items-center justify-center"
+                      onClick={() => scrollByFrame('right')}
+                    >
+                      ›
+                    </button>
+                  </div>
+                </div>
+              );
+            })()}
           </div>
         </ScrollArea>
       </div>

@@ -43,7 +43,8 @@ interface PurchasePageProps {
 }
 
 export function PurchasePage({ filterBySite }: PurchasePageProps = {}) {
-  const { addMaterial, updateMaterial, deleteMaterial, materials } = useMaterials();
+  const { addMaterial, updateMaterial, deleteMaterial } = useMaterials();
+  const [materials, setMaterials] = useState<SharedMaterial[]>([]);
 
   // Memoized data transformation function
   const transformPurchaseData = useCallback((purchase: Record<string, unknown>): SharedMaterial => {
@@ -60,10 +61,11 @@ export function PurchasePage({ filterBySite }: PurchasePageProps = {}) {
       (purchase['vendor_name'] as string) ||
       'Unknown Vendor';
       
+    const siteId: string = (purchase['site_id'] as string) || '';
     const siteName: string = 
       (purchase['sites'] as Record<string, unknown>)?.['name'] as string || 
       (purchase['site_name'] as string) ||
-      'Gudibande';
+      '';
       
     const quantity = (purchase['quantity'] as number) || 0;
     const unit = (purchase['unit'] as string) || (purchase['unit_of_measure'] as string) || 'Ton';
@@ -76,7 +78,9 @@ export function PurchasePage({ filterBySite }: PurchasePageProps = {}) {
       id: purchase['id'] as string || `temp-${Math.random().toString(36).substr(2, 9)}`,
       materialName,
       vendor: vendorName,
-      site: siteName,
+      site: siteName || (siteId ? `Site ${siteId}` : ''),
+      // attach siteId for filtering within Sites page
+      ...(siteId ? ({ siteId } as any) : {}),
       quantity,
       unit,
       unitRate,
@@ -97,10 +101,25 @@ export function PurchasePage({ filterBySite }: PurchasePageProps = {}) {
     return transformed;
   }, []);
 
-  // Mock-only: use Materials context initial data; no fetching
+  // Load mock purchases from public JSON and transform; no DB calls
   useEffect(() => {
-    // no-op
-  }, []);
+    let isMounted = true;
+    const load = async () => {
+      try {
+        const resp = await fetch('/purchase-summary.json', { headers: { 'Cache-Control': 'no-cache' } });
+        if (!resp.ok) throw new Error(String(resp.status));
+        const json = await resp.json();
+        const transformed: SharedMaterial[] = json.map(transformPurchaseData);
+        if (isMounted) setMaterials(transformed);
+      } catch {
+        if (isMounted) setMaterials([]);
+      }
+    };
+    void load();
+    return () => {
+      isMounted = false;
+    };
+  }, [transformPurchaseData]);
 
   // Use shared state hooks
   const tableState = useTableState({
@@ -140,7 +159,7 @@ export function PurchasePage({ filterBySite }: PurchasePageProps = {}) {
   const sortedAndFilteredMaterials = useMemo(() => {
     return materials
       .filter((material) => {
-        const matchesSite = !filterBySite || material.site === filterBySite;
+        const matchesSite = !filterBySite || (material as any).siteId === filterBySite || material.site === filterBySite;
         const matchesSearch =
           material.materialName?.toLowerCase().includes(tableState.searchTerm.toLowerCase()) ||
           material.vendor?.toLowerCase().includes(tableState.searchTerm.toLowerCase()) ||
@@ -349,7 +368,7 @@ export function PurchasePage({ filterBySite }: PurchasePageProps = {}) {
                         dialog.closeDialog();
                       }
                     }}
-                    maxWidth="max-w-4xl"
+                    maxWidth="max-w-3xl"
                     trigger={
                       <Button
                         onClick={() => dialog.openDialog()}

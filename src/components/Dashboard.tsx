@@ -767,7 +767,13 @@ export function Dashboard({ onNavigate }: DashboardProps) {
           <Button
             variant="outline"
             className="h-auto p-6 flex flex-col items-center gap-3"
-            onClick={() => onNavigate?.('reports')}
+            onClick={() => {
+              if (onNavigate) {
+                onNavigate('reports?view=financial');
+              } else {
+                window.location.href = '/reports?view=financial';
+              }
+            }}
           >
             <BarChart3 className="h-8 w-8 text-blue-600" />
             <div className="text-center">
@@ -781,7 +787,13 @@ export function Dashboard({ onNavigate }: DashboardProps) {
           <Button
             variant="outline"
             className="h-auto p-6 flex flex-col items-center gap-3"
-            onClick={() => onNavigate?.('reports')}
+            onClick={() => {
+              if (onNavigate) {
+                onNavigate('reports?view=progress');
+              } else {
+                window.location.href = '/reports?view=progress';
+              }
+            }}
           >
             <PieChart className="h-8 w-8 text-green-600" />
             <div className="text-center">
@@ -795,7 +807,13 @@ export function Dashboard({ onNavigate }: DashboardProps) {
           <Button
             variant="outline"
             className="h-auto p-6 flex flex-col items-center gap-3"
-            onClick={() => onNavigate?.('reports')}
+            onClick={() => {
+              if (onNavigate) {
+                onNavigate('reports?view=analytics');
+              } else {
+                window.location.href = '/reports?view=analytics';
+              }
+            }}
           >
             <TrendingUp className="h-8 w-8 text-purple-600" />
             <div className="text-center">

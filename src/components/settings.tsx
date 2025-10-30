@@ -1,7 +1,8 @@
 'use client';
 
 import { User as UserIcon, Shield, Bell, Palette, Lock, Save } from 'lucide-react';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
+import { toast } from 'sonner';
 
 import { SectionCard } from './layout/SectionCard';
 import { Badge } from './ui/badge';
@@ -20,7 +21,7 @@ interface UserSettingsProps {
     role: string;
     companyName: string;
   };
-  onUpdateUser: (updates: Partial<{ username: string; role: string; companyName: string }>) => void;
+  onUpdateUser?: (updates: Record<string, unknown>) => void;
 }
 
 export function SettingsPage({ user, onUpdateUser }: UserSettingsProps) {
@@ -40,16 +41,16 @@ export function SettingsPage({ user, onUpdateUser }: UserSettingsProps) {
   const [preferences, setPreferences] = useState({
     emailNotifications: true,
     pushNotifications: false,
-    darkMode: false,
+    darkModeMode: 'system' as 'system' | 'light' | 'dark',
     language: 'en',
     timezone: 'Asia/Kolkata',
   });
 
   const handleProfileSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // Update user profile
-    onUpdateUser(profileForm);
-    alert('Profile updated successfully');
+    // Simulate API and notify caller (if provided)
+    onUpdateUser?.({ profile: profileForm });
+    toast.success('Profile updated successfully');
   };
 
   const handlePasswordSubmit = (e: React.FormEvent) => {
@@ -58,15 +59,74 @@ export function SettingsPage({ user, onUpdateUser }: UserSettingsProps) {
       alert('New passwords do not match');
       return;
     }
-    // Update password
-    alert('Password updated successfully');
+    // Simulate password update
+    toast.success('Password updated successfully');
     setPasswordForm({ currentPassword: '', newPassword: '', confirmPassword: '' });
   };
 
   const handlePreferencesUpdate = (key: string, value: string | boolean) => {
-    setPreferences((prev) => ({ ...prev, [key]: value }));
-    // Auto-save preferences
+    setPreferences((prev) => {
+      const next = { ...prev, [key]: value } as typeof prev;
+
+      // Side-effects for specific keys
+      if (key === 'darkModeMode') {
+        applyTheme(value as typeof next.darkModeMode);
+      }
+
+      // Persist
+      try {
+        localStorage.setItem('app_preferences', JSON.stringify(next));
+      } catch {
+        // ignore storage errors
+      }
+
+      return next;
+    });
   };
+
+  const requestPushPermission = async () => {
+    if (typeof window === 'undefined') return;
+    if (!('Notification' in window)) {
+      toast.error('Push notifications are not supported in this browser');
+      return;
+    }
+    try {
+      const permission = await Notification.requestPermission();
+      if (permission === 'granted') {
+        new Notification('Notifications enabled', { body: 'You will receive updates here.' });
+        handlePreferencesUpdate('pushNotifications', true);
+        toast.success('Push notifications enabled');
+      } else if (permission === 'denied') {
+        handlePreferencesUpdate('pushNotifications', false);
+        toast.error('Notification permission denied');
+      }
+    } catch {
+      handlePreferencesUpdate('pushNotifications', false);
+      toast.error('Failed to enable notifications');
+    }
+  };
+
+  const applyTheme = (mode: 'system' | 'light' | 'dark') => {
+    if (typeof document === 'undefined' || typeof window === 'undefined') return;
+    const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+    const shouldDark = mode === 'dark' || (mode === 'system' && prefersDark);
+    document.documentElement.classList.toggle('dark', shouldDark);
+  };
+
+  // Load saved preferences on mount
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem('app_preferences');
+      if (raw) {
+        const parsed = JSON.parse(raw) as typeof preferences;
+        setPreferences((prev) => ({ ...prev, ...parsed }));
+        applyTheme(parsed.darkModeMode ?? 'system');
+      }
+    } catch {
+      // ignore parse errors
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <div className="h-full w-full bg-background flex flex-col">
@@ -300,14 +360,14 @@ export function SettingsPage({ user, onUpdateUser }: UserSettingsProps) {
                   <div className="flex items-center justify-between p-4 border rounded-lg">
                     <div className="space-y-1">
                       <p className="text-sm font-medium text-gray-900">Push Notifications</p>
-                      <p className="text-xs text-gray-500">Receive browser notifications</p>
+                      <p className="text-xs text-gray-500">
+                        Receive browser notifications
+                        {preferences.pushNotifications ? ' (enabled)' : ' (disabled)'}
+                      </p>
                     </div>
-                    <Switch
-                      checked={preferences.pushNotifications}
-                      onCheckedChange={(checked) =>
-                        handlePreferencesUpdate('pushNotifications', checked)
-                      }
-                    />
+                    <Button type="button" onClick={requestPushPermission} variant="outline">
+                      Enable
+                    </Button>
                   </div>
                 </div>
               </SectionCard>
@@ -320,15 +380,31 @@ export function SettingsPage({ user, onUpdateUser }: UserSettingsProps) {
             <div className="max-w-4xl mx-auto space-y-6">
               <SectionCard title="Application Preferences">
                 <div className="space-y-6">
-                  <div className="flex items-center justify-between p-4 border rounded-lg">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="space-y-1">
-                      <p className="text-sm font-medium text-gray-900">Dark Mode</p>
-                      <p className="text-xs text-gray-500">Use dark theme for the application</p>
+                      <p className="text-sm font-medium text-gray-900">Theme Preference</p>
+                      <p className="text-xs text-gray-500">Choose when dark mode applies</p>
                     </div>
-                    <Switch
-                      checked={preferences.darkMode}
-                      onCheckedChange={(checked) => handlePreferencesUpdate('darkMode', checked)}
-                    />
+                    <div className="space-y-2">
+                      <Label htmlFor="theme" className="text-sm font-medium text-gray-700">
+                        Theme
+                      </Label>
+                      <Select
+                        value={preferences.darkModeMode}
+                        onValueChange={(value) =>
+                          handlePreferencesUpdate('darkModeMode', value as 'system' | 'light' | 'dark')
+                        }
+                      >
+                        <SelectTrigger id="theme">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="system">System</SelectItem>
+                          <SelectItem value="light">Light</SelectItem>
+                          <SelectItem value="dark">Dark</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

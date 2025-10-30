@@ -21,7 +21,7 @@ import {
   ShoppingCart,
   Target,
 } from 'lucide-react';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 
 import { ExpensesPage } from './expenses';
 import { PurchasePage } from './purchase';
@@ -376,6 +376,9 @@ export function SitesPage({ selectedSite: propSelectedSite, onSiteSelect }: Site
   const [sites, setSites] = useState<Site[]>([]);
   const [selectedSite, setSelectedSite] = useState<string>(propSelectedSite || '1');
   const [isLoading, setIsLoading] = useState(true);
+  // Horizontal scroller state for sites
+  const scrollerRef = useRef<HTMLDivElement | null>(null);
+  const [frameWidth, setFrameWidth] = useState<number | undefined>(undefined);
 
   // Mock-only mode: use local mock data
   useEffect(() => {
@@ -395,6 +398,26 @@ export function SitesPage({ selectedSite: propSelectedSite, onSiteSelect }: Site
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [activeTab, setActiveTab] = useState<string>('overview');
+
+  // Measure card + set frame width for exactly 3 per view
+  useEffect(() => {
+    const el = scrollerRef.current;
+    if (!el) return;
+    const firstCard = el.querySelector('.site-card') as HTMLElement | null;
+    const cardWidth = firstCard?.offsetWidth || 360;
+    const gapPx = 16;
+    setFrameWidth(cardWidth * 3 + gapPx * 2);
+  }, [sites.length]);
+
+  const scrollByFrame = (dir: 'left' | 'right') => {
+    const el = scrollerRef.current;
+    if (!el) return;
+    const firstCard = el.querySelector('.site-card') as HTMLElement | null;
+    const cardWidth = firstCard?.offsetWidth || 360;
+    const gapPx = 16;
+    const distance = (cardWidth + gapPx) * 3;
+    el.scrollBy({ left: dir === 'left' ? -distance : distance, behavior: 'smooth' });
+  };
 
   // Filter sites based on status and search query
   const filteredSites = sites.filter((site) => {
@@ -559,10 +582,14 @@ export function SitesPage({ selectedSite: propSelectedSite, onSiteSelect }: Site
           </CardContent>
         </Card>
 
-        {/* Sites List */}
+        {/* Sites List - horizontal scroller */}
         <ScrollArea className="flex-1">
           <div className="p-6">
-            <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
+            {(() => {
+              const computedFrame = frameWidth ? frameWidth + 32 : undefined;
+              return (
+                <div className="mx-auto" style={{ width: computedFrame }}>
+                  <div ref={scrollerRef} className="flex gap-4 overflow-x-auto pb-2 px-4 snap-x snap-mandatory scroll-smooth">
               {filteredSites.map((site) => {
                 const getStatusConfig = () => {
                   switch (site.status) {
@@ -612,9 +639,9 @@ export function SitesPage({ selectedSite: propSelectedSite, onSiteSelect }: Site
                 return (
                   <Card
                     key={site.id}
-                    className={`group relative cursor-pointer transition-all duration-300 overflow-hidden ${
+                    className={`site-card group relative cursor-pointer transition-shadow duration-300 overflow-visible min-w-[360px] w-[360px] ${
                       selectedSite === site.id
-                        ? 'border-primary shadow-lg ring-2 ring-primary/30 scale-[1.02]'
+                        ? 'border-primary shadow-lg ring-2 ring-primary/30'
                         : 'border-border hover:border-primary/40 hover:shadow-md'
                     }`}
                     onClick={() => {
@@ -734,7 +761,28 @@ export function SitesPage({ selectedSite: propSelectedSite, onSiteSelect }: Site
                   </Card>
                 );
               })}
-            </div>
+                  </div>
+                  <div className="mt-3 flex items-center justify-between px-6">
+                    <button
+                      type="button"
+                      aria-label="Previous sites"
+                      className="h-10 w-10 rounded-full bg-background border shadow hover:bg-muted flex items-center justify-center"
+                      onClick={() => scrollByFrame('left')}
+                    >
+                      ‹
+                    </button>
+                    <button
+                      type="button"
+                      aria-label="Next sites"
+                      className="h-10 w-10 rounded-full bg-background border shadow hover:bg-muted flex items-center justify-center"
+                      onClick={() => scrollByFrame('right')}
+                    >
+                      ›
+                    </button>
+                  </div>
+                </div>
+              );
+            })()}
           </div>
         </ScrollArea>
       </div>
@@ -1025,11 +1073,11 @@ export function SitesPage({ selectedSite: propSelectedSite, onSiteSelect }: Site
                           </TabsContent>
 
                           <TabsContent value="purchase" className="mt-0">
-                            <PurchasePage filterBySite={currentSite?.name} />
+                            <PurchasePage filterBySite={currentSite?.id} />
                           </TabsContent>
 
                           <TabsContent value="work-progress" className="mt-0">
-                            <WorkProgressPage filterBySite={currentSite?.name} />
+                            <WorkProgressPage filterBySite={currentSite?.id} />
                           </TabsContent>
 
                           <TabsContent value="expenses" className="mt-0">

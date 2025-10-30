@@ -13,7 +13,8 @@ import {
   Info,
   BarChart3,
 } from 'lucide-react';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import {
   XAxis,
   YAxis,
@@ -184,6 +185,25 @@ const calculateSiteProgress = (site: {
 
 export function ReportsPage() {
   const [activeSegment, setActiveSegment] = useState<number | null>(null);
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const initialTab = (searchParams?.get('view') || 'financial') as 'financial' | 'progress' | 'analytics';
+  const [activeTab, setActiveTab] = useState<'financial' | 'progress' | 'analytics'>(initialTab);
+
+  // Keep URL and tab state in sync
+  useEffect(() => {
+    const qpTab = (searchParams?.get('view') || 'financial') as 'financial' | 'progress' | 'analytics';
+    if (qpTab !== activeTab) {
+      setActiveTab(qpTab);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams]);
+
+  const handleTabChange = (value: string) => {
+    const next = (value || 'financial') as 'financial' | 'progress' | 'analytics';
+    setActiveTab(next);
+    router.replace(`/reports?view=${next}`);
+  };
 
   // Use shared state hooks
   const tableState = useTableState({
@@ -730,7 +750,7 @@ export function ReportsPage() {
 
   return (
     <div className="h-full w-full bg-background flex flex-col">
-      <Tabs defaultValue="financial" className="flex-1 flex flex-col overflow-hidden">
+      <Tabs value={activeTab} onValueChange={handleTabChange} className="flex-1 flex flex-col overflow-hidden">
         {/* Navigation Tabs - Topmost */}
         <Card className="border-0 shadow-none rounded-none border-b bg-gradient-to-r from-background to-muted/20">
           <CardContent className="px-6 py-4">
