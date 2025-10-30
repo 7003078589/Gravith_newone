@@ -42,13 +42,15 @@ interface PurchasePageProps {
   filterBySite?: string;
 }
 
+// Extend shared material locally to carry optional siteId for site-scoped filtering
+type SiteScopedMaterial = SharedMaterial & { siteId?: string };
+
 export function PurchasePage({ filterBySite }: PurchasePageProps = {}) {
   const { addMaterial, updateMaterial, deleteMaterial } = useMaterials();
-  const [materials, setMaterials] = useState<SharedMaterial[]>([]);
+  const [materials, setMaterials] = useState<SiteScopedMaterial[]>([]);
 
   // Memoized data transformation function
-  const transformPurchaseData = useCallback((purchase: Record<string, unknown>): SharedMaterial => {
-    console.log('🔄 Transforming purchase data:', purchase);
+  const transformPurchaseData = useCallback((purchase: Record<string, unknown>): SiteScopedMaterial => {
     
     // Handle both database structure (nested) and JSON structure (flat)
     const materialName: string = 
@@ -74,13 +76,12 @@ export function PurchasePage({ filterBySite }: PurchasePageProps = {}) {
     const purchaseDate = (purchase['purchase_date'] as string) || new Date().toISOString().split('T')[0];
     const invoiceNumber = (purchase['purchase_id'] as string) || (purchase['vendor_invoice_number'] as string) || '';
     
-    const transformed = {
+    const transformed: SiteScopedMaterial = {
       id: purchase['id'] as string || `temp-${Math.random().toString(36).substr(2, 9)}`,
       materialName,
       vendor: vendorName,
       site: siteName || (siteId ? `Site ${siteId}` : ''),
       // attach siteId for filtering within Sites page
-      ...(siteId ? ({ siteId } as any) : {}),
       quantity,
       unit,
       unitRate,
@@ -96,8 +97,8 @@ export function PurchasePage({ filterBySite }: PurchasePageProps = {}) {
       createdAt: purchase['created_at'] as string || new Date().toISOString(),
       updatedAt: purchase['updated_at'] as string || new Date().toISOString(),
     };
+    if (siteId) transformed.siteId = siteId;
     
-    console.log('✅ Transformed purchase:', transformed);
     return transformed;
   }, []);
 
@@ -109,7 +110,7 @@ export function PurchasePage({ filterBySite }: PurchasePageProps = {}) {
         const resp = await fetch('/purchase-summary.json', { headers: { 'Cache-Control': 'no-cache' } });
         if (!resp.ok) throw new Error(String(resp.status));
         const json = await resp.json();
-        const transformed: SharedMaterial[] = json.map(transformPurchaseData);
+        const transformed: SiteScopedMaterial[] = json.map(transformPurchaseData);
         if (isMounted) setMaterials(transformed);
       } catch {
         if (isMounted) setMaterials([]);
@@ -136,7 +137,7 @@ export function PurchasePage({ filterBySite }: PurchasePageProps = {}) {
 
   // Memoized filtered materials for stats
   const filteredMaterialsForStats = useMemo(() => {
-    return filterBySite ? materials.filter((m) => m.site === filterBySite) : materials;
+    return filterBySite ? materials.filter((m) => m.siteId === filterBySite || m.site === filterBySite) : materials;
   }, [materials, filterBySite]);
 
   // Memoized summary statistics
@@ -159,7 +160,7 @@ export function PurchasePage({ filterBySite }: PurchasePageProps = {}) {
   const sortedAndFilteredMaterials = useMemo(() => {
     return materials
       .filter((material) => {
-        const matchesSite = !filterBySite || (material as any).siteId === filterBySite || material.site === filterBySite;
+        const matchesSite = !filterBySite || material.siteId === filterBySite || material.site === filterBySite;
         const matchesSearch =
           material.materialName?.toLowerCase().includes(tableState.searchTerm.toLowerCase()) ||
           material.vendor?.toLowerCase().includes(tableState.searchTerm.toLowerCase()) ||
@@ -193,13 +194,7 @@ export function PurchasePage({ filterBySite }: PurchasePageProps = {}) {
   // Destructure summary stats for easier access
   const { totalPurchases, totalValue, averageOrderValue, totalQuantity } = summaryStats;
 
-  // Debug log for materials state
-  useEffect(() => {
-    console.log('📦 Materials state updated:', {
-      count: materials.length,
-      firstItem: materials[0]
-    });
-  }, [materials]);
+  // Debug log removed to satisfy CI lint rules
 
   const handleFormSubmit = (materialData: Omit<SharedMaterial, 'id'>) => {
     if (dialog.editingItem) {

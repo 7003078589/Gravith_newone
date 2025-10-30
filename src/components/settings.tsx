@@ -125,7 +125,6 @@ export function SettingsPage({ user, onUpdateUser }: UserSettingsProps) {
     } catch {
       // ignore parse errors
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (
