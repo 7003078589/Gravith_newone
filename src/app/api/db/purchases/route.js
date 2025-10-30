@@ -10,7 +10,7 @@ if (!supabaseUrl || !supabaseServiceRoleKey) {
 
 const supabaseAdmin = createClient(supabaseUrl, supabaseServiceRoleKey);
 
-export async function GET() {
+export async function GET(request) {
   // Set CORS headers
   const headers = {
     'Access-Control-Allow-Origin': '*',
@@ -40,11 +40,10 @@ export async function GET() {
       
       // Fallback to JSON data
       try {
-        const fs = await import('fs');
-        const path = await import('path');
-        const purchaseData = JSON.parse(
-          fs.readFileSync(path.join(process.cwd(), 'public/purchase-summary.json'), 'utf8'),
-        );
+        const jsonUrl = new URL('/purchase-summary.json', request.url);
+        const resp = await fetch(jsonUrl);
+        if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+        const purchaseData = await resp.json();
         
         console.log(`✅ Found ${purchaseData.length} purchase records in JSON fallback`);
         
@@ -77,11 +76,10 @@ export async function GET() {
       console.log('🔄 Database is empty, falling back to JSON data...');
       
       try {
-        const fs = await import('fs');
-        const path = await import('path');
-        const purchaseData = JSON.parse(
-          fs.readFileSync(path.join(process.cwd(), 'public/purchase-summary.json'), 'utf8'),
-        );
+        const jsonUrl = new URL('/purchase-summary.json', request.url);
+        const resp = await fetch(jsonUrl);
+        if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+        const purchaseData = await resp.json();
         
         console.log(`✅ Found ${purchaseData.length} purchase records in JSON fallback`);
         
