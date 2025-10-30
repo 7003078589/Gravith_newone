@@ -94,8 +94,6 @@ export function PurchasePage({ filterBySite }: PurchasePageProps = {}) {
       addedBy: 'System', // Add missing addedBy property
       consumedQuantity: 0, // Add missing consumedQuantity property
       remainingQuantity: quantity, // Add missing remainingQuantity property
-      createdAt: purchase['created_at'] as string || new Date().toISOString(),
-      updatedAt: purchase['updated_at'] as string || new Date().toISOString(),
     };
     if (siteId) transformed.siteId = siteId;
     
