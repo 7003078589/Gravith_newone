@@ -19,6 +19,11 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: 'Gavith Build - Construction Management System',
   description: 'Next-generation construction management platform',
+  icons: {
+    icon: '/fevicon.jpeg',
+    shortcut: '/fevicon.jpeg',
+    apple: '/fevicon.jpeg',
+  },
 };
 
 export default function RootLayout({

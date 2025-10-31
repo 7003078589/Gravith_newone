@@ -20,11 +20,21 @@ import React, { useState, useEffect } from 'react';
 
 import { formatCurrency, formatDate, formatPercentage } from '../lib/utils';
 
+import { ExpenseForm } from './forms/ExpenseForm';
+import MaterialMasterForm from './forms/MaterialMasterForm';
+import { MaterialReceiptForm } from './forms/MaterialReceiptForm';
 import { SectionCard } from './layout/SectionCard';
 import { Alert, AlertDescription } from './ui/alert';
 import { Badge } from './ui/badge';
 import { Button } from './ui/button';
 import { Card, CardContent } from './ui/card';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from './ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './ui/tooltip';
 
@@ -277,6 +287,13 @@ export function Dashboard({ onNavigate }: DashboardProps) {
     totalExpenseAmount: 0,
   });
   // const [isLoading, setIsLoading] = useState(true);
+
+  // Form dialog states
+  const [isExpenseFormOpen, setIsExpenseFormOpen] = useState(false);
+  const [isMaterialMasterFormOpen, setIsMaterialMasterFormOpen] = useState(false);
+  const [isPurchaseFormOpen, setIsPurchaseFormOpen] = useState(false);
+  const [isVehicleFormOpen, setIsVehicleFormOpen] = useState(false);
+  const [isWorkProgressFormOpen, setIsWorkProgressFormOpen] = useState(false);
 
   // Force re-render on mount and store onNavigate function
   React.useEffect(() => {
@@ -594,28 +611,25 @@ export function Dashboard({ onNavigate }: DashboardProps) {
                   className="group cursor-pointer transition-all hover:shadow-md hover:scale-105"
                   onClick={() => {
                     console.log('Quick action clicked:', action.title, '->', action.action);
-                    console.log('onNavigate function:', onNavigate);
-                    console.log('onNavigate type:', typeof onNavigate);
-                    
-                    if (onNavigate && typeof onNavigate === 'function') {
-                      console.log('Calling onNavigate with:', action.action);
-                      onNavigate(action.action);
-                    } else {
-                      console.log('onNavigate not available, using direct navigation');
-                      // Direct navigation using window.location
-                      const pageMap: Record<string, string> = {
-                        'expenses': '/expenses',
-                        'masters': '/masters', 
-                        'materials': '/materials',
-                        'vehicles': '/vehicles',
-                        'work-progress': '/work-progress'
-                      };
-                      
-                      const targetPage = pageMap[action.action];
-                      if (targetPage) {
-                        console.log('Navigating directly to:', targetPage);
-                        window.location.href = targetPage;
-                      }
+                    // Open forms directly instead of navigating
+                    switch (action.action) {
+                      case 'expenses':
+                        setIsExpenseFormOpen(true);
+                        break;
+                      case 'masters':
+                        setIsMaterialMasterFormOpen(true);
+                        break;
+                      case 'materials':
+                        setIsPurchaseFormOpen(true);
+                        break;
+                      case 'vehicles':
+                        setIsVehicleFormOpen(true);
+                        break;
+                      case 'work-progress':
+                        setIsWorkProgressFormOpen(true);
+                        break;
+                      default:
+                        console.log('Unknown action:', action.action);
                     }
                   }}
                 >
@@ -890,6 +904,107 @@ export function Dashboard({ onNavigate }: DashboardProps) {
           </div>
         </TabsContent>
       </Tabs>
+
+      {/* Form Dialogs for Quick Actions */}
+      {/* Expense Form Dialog */}
+      <Dialog open={isExpenseFormOpen} onOpenChange={setIsExpenseFormOpen}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Record Expense</DialogTitle>
+            <DialogDescription>Add a new expense entry</DialogDescription>
+          </DialogHeader>
+          <ExpenseForm
+            onSubmit={() => {
+              setIsExpenseFormOpen(false);
+            }}
+            onCancel={() => setIsExpenseFormOpen(false)}
+          />
+        </DialogContent>
+      </Dialog>
+
+      {/* Material Master Form Dialog */}
+      <Dialog open={isMaterialMasterFormOpen} onOpenChange={setIsMaterialMasterFormOpen}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Add Material Master</DialogTitle>
+            <DialogDescription>Add a new material to the master database</DialogDescription>
+          </DialogHeader>
+          <MaterialMasterForm
+            onSubmit={() => {
+              setIsMaterialMasterFormOpen(false);
+            }}
+            onCancel={() => setIsMaterialMasterFormOpen(false)}
+          />
+        </DialogContent>
+      </Dialog>
+
+      {/* Purchase Form Dialog */}
+      <Dialog open={isPurchaseFormOpen} onOpenChange={setIsPurchaseFormOpen}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Add Material Purchase</DialogTitle>
+            <DialogDescription>Record a new material purchase</DialogDescription>
+          </DialogHeader>
+          <MaterialReceiptForm
+            onSubmit={() => {
+              setIsPurchaseFormOpen(false);
+            }}
+            onCancel={() => setIsPurchaseFormOpen(false)}
+          />
+        </DialogContent>
+      </Dialog>
+
+      {/* Vehicle Form Dialog - Simple placeholder for now */}
+      <Dialog open={isVehicleFormOpen} onOpenChange={setIsVehicleFormOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Vehicle Check-in</DialogTitle>
+            <DialogDescription>Update vehicle status or add check-in information</DialogDescription>
+          </DialogHeader>
+          <div className="p-4">
+            <p className="text-sm text-muted-foreground">
+              Vehicle check-in functionality will be available soon. Please navigate to the Vehicles page for full vehicle management.
+            </p>
+            <div className="mt-4 flex justify-end gap-2">
+              <Button variant="outline" onClick={() => setIsVehicleFormOpen(false)}>
+                Cancel
+              </Button>
+              <Button onClick={() => {
+                setIsVehicleFormOpen(false);
+                onNavigate?.('vehicles');
+              }}>
+                Go to Vehicles Page
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Work Progress Form Dialog - Simple placeholder for now */}
+      <Dialog open={isWorkProgressFormOpen} onOpenChange={setIsWorkProgressFormOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Site Update / Work Progress</DialogTitle>
+            <DialogDescription>Log site progress and work updates</DialogDescription>
+          </DialogHeader>
+          <div className="p-4">
+            <p className="text-sm text-muted-foreground">
+              Work progress form functionality will be available soon. Please navigate to the Work Progress page for full work progress management.
+            </p>
+            <div className="mt-4 flex justify-end gap-2">
+              <Button variant="outline" onClick={() => setIsWorkProgressFormOpen(false)}>
+                Cancel
+              </Button>
+              <Button onClick={() => {
+                setIsWorkProgressFormOpen(false);
+                onNavigate?.('work-progress');
+              }}>
+                Go to Work Progress Page
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

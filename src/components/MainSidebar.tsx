@@ -127,8 +127,8 @@ export function MainSidebar({ currentPage, onNavigate }: MainSidebarProps) {
   return (
     <TooltipProvider>
       <Sidebar collapsible="icon">
-        <SidebarHeader className="border-b border-sidebar-border">
-          <div className="flex items-center justify-center h-full">
+        <SidebarHeader className="border-b border-sidebar-border h-16 flex items-center">
+          <div className="flex items-center justify-center w-full h-full">
             <div className="flex items-center">
               <Image
                 src={gLogo}
