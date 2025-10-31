@@ -88,8 +88,20 @@ export function AppShell({ children }: AppShellProps) {
 
   const currentPage = getCurrentPage();
 
-  const handleLogout = () => {
-    logout();
+  const handleLogout = async () => {
+    try {
+      await logout();
+    } catch (error) {
+      console.error('Error during logout:', error);
+    } finally {
+      // Always redirect to landing page after logout
+      // Using window.location.href to force a full page reload and clear all cached state
+      if (typeof window !== 'undefined') {
+        window.location.href = '/';
+      } else {
+        router.push('/');
+      }
+    }
   };
 
   // Show loading state while checking authentication
